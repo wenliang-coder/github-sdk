@@ -66,7 +66,7 @@ mcp-scripts:
         default: 200000
       max_items_per_source:
         type: number
-        default: 25
+        default: 8
     timeout: 300
     run: |
       cd "$GITHUB_WORKSPACE"
@@ -79,7 +79,7 @@ mcp-scripts:
           signals_dir='$INPUT_SIGNALS_DIR',
           timeout_seconds=int('${INPUT_TIMEOUT_SECONDS:-15}'),
           max_chars=int('${INPUT_MAX_CHARS:-200000}'),
-          max_items_per_source=int('${INPUT_MAX_ITEMS_PER_SOURCE:-25}')
+          max_items_per_source=int('${INPUT_MAX_ITEMS_PER_SOURCE:-8}')
       )
       print(json.dumps(result, ensure_ascii=False, default=str))
       "
@@ -94,7 +94,7 @@ mcp-scripts:
         required: true
       max_items_per_source:
         type: number
-        default: 25
+        default: 8
       time_window_hours:
         type: number
         default: 24
@@ -107,7 +107,7 @@ mcp-scripts:
       result = tech_load_articles_from_disk(
           signals_dir='$INPUT_SIGNALS_DIR',
           source_list_path='$INPUT_SOURCE_LIST_PATH',
-          max_items_per_source=int('${INPUT_MAX_ITEMS_PER_SOURCE:-25}'),
+          max_items_per_source=int('${INPUT_MAX_ITEMS_PER_SOURCE:-8}'),
           time_window_hours=int('${INPUT_TIME_WINDOW_HOURS:-24}')
       )
       print(json.dumps(result, ensure_ascii=False, default=str))
@@ -182,7 +182,7 @@ mcp-scripts:
 - `output_dir`: `Lab-01-Tech-Insights/output`
 - `time_window_hours`: `24`
 - `top_k`: `12`
-- `max_items_per_source`: `25`
+- `max_items_per_source`: `8`
 - `timeout_seconds`: `15`
 - `max_chars`: `200000`
 
@@ -197,8 +197,8 @@ mcp-scripts:
 ## 阶段 1：抓取并装载原始信号
 
 1. 先调用 `tech.read_source_list(source_list_path)` 读取并确认源列表可用。
-2. 调用 `tech.fetch_all_to_disk(source_list_path, signals_dir, timeout_seconds=15, max_chars=200000, max_items_per_source=25)` 抓取所有信号并落盘到 `signals_dir`。
-3. 调用 `tech.load_articles_from_disk(signals_dir, source_list_path, max_items_per_source=25, time_window_hours=24)` 生成原始信号 JSON。
+2. 调用 `tech.fetch_all_to_disk(source_list_path, signals_dir, timeout_seconds=15, max_chars=200000, max_items_per_source=8)` 抓取所有信号并落盘到 `signals_dir`。
+3. 调用 `tech.load_articles_from_disk(signals_dir, source_list_path, max_items_per_source=8, time_window_hours=24)` 生成原始信号 JSON。
 4. 用 `edit` 工具将原始信号 JSON 写入 `Lab-01-Tech-Insights/output/raw_signals.json`。
 5. 简要汇报源列表路径、抓取目录、纳入时间窗与原始信号保存位置。
 6. 如果工具提示使用了兜底逻辑，在输出中注明。
