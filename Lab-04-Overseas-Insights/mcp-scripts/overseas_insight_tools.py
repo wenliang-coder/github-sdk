@@ -1215,6 +1215,157 @@ def overseas_insight_or_fallback(
     return result
 
 
+# 北美热销榜「销量代理」字段：用公开榜单排名 + 评分 + 评价数 + 趋势作为销量代理，
+# 不含精确件数/GMV（免费抓取不可得，付费工具方有）。
+_PRODUCT_PLATFORMS = {
+    "amazon": "Amazon",
+    "sephora": "Sephora",
+    "ulta": "Ulta",
+    "target": "Target",
+    "tiktok": "TikTok Shop",
+}
+
+
+def _coerce_number(v: Any) -> Any:
+    if isinstance(v, (int, float)):
+        return v
+    if isinstance(v, str):
+        s = v.strip().replace(",", "")
+        m = re.search(r"-?\d+(?:\.\d+)?", s)
+        if m:
+            try:
+                f = float(m.group())
+                return int(f) if f.is_integer() else f
+            except ValueError:
+                return None
+    return None
+
+
+def overseas_products_or_fallback(
+    *,
+    products_json: str = "",
+    products_candidate_path: str | None = None,
+    out_path: str | None = None,
+    top_n: int = 5,
+) -> dict[str, Any]:
+    """Validate + persist the「北美热销 TOP-N 产品」list (rank/rating/reviews/trend
+    as sales proxies). Path-based + out_path, consistent with the other tools.
+    Falls back to an empty list (with a note) when the candidate is unusable —
+    we never fabricate sales numbers."""
+    if products_candidate_path:
+        products_json = _read_text_file(products_candidate_path)
+
+    top_n = max(1, int(top_n or 5))
+    try:
+        obj = _extract_json(products_json)
+        if isinstance(obj, list):
+            obj = {"products": obj}
+        if isinstance(obj, dict) and isinstance(obj.get("products"), list):
+            sanitized: list[dict[str, Any]] = []
+            for i, p in enumerate(obj["products"], start=1):
+                if not isinstance(p, dict):
+                    continue
+                plat_raw = str(p.get("platform") or "").strip()
+                plat_key = plat_raw.lower()
+                platform = next(
+                    (lbl for k, lbl in _PRODUCT_PLATFORMS.items() if k in plat_key),
+                    plat_raw,
+                )
+                sanitized.append(
+                    {
+                        "rank": int(_coerce_number(p.get("rank")) or i),
+                        "name": str(p.get("name") or p.get("title") or "").strip(),
+                        "brand": str(p.get("brand") or "").strip(),
+                        "subcategory": str(p.get("subcategory") or "").strip(),
+                        "price": str(p.get("price") or p.get("price_band") or "").strip(),
+                        "rating": _coerce_number(p.get("rating")),
+                        "review_count": _coerce_number(p.get("review_count")),
+                        "trend": str(p.get("trend") or "").strip(),
+                        "platform": platform,
+                        "url": str(p.get("url") or "").strip(),
+                        "evidence": str(p.get("evidence") or p.get("data_source") or "").strip(),
+                        "selling_points": [
+                            str(x).strip()
+                            for x in (p.get("selling_points") or [])
+                            if isinstance(x, str) and x.strip()
+                        ],
+                        "why_hot": str(p.get("why_hot") or "").strip(),
+                    }
+                )
+                if len(sanitized) >= top_n:
+                    break
+            if sanitized:
+                result = {"mode": "llm", "top_n": top_n, "products": sanitized}
+                if out_path:
+                    _write_json_file(out_path, result)
+                return result
+    except Exception:
+        pass
+
+    result = {
+        "mode": "fallback",
+        "top_n": top_n,
+        "products": [],
+        "note": "未获取到可用的电商榜单数据（站点反爬/SPA 渲染），TOP产品改由 RSS 新闻信号兜底；请在报告中注明缺口。",
+    }
+    if out_path:
+        _write_json_file(out_path, result)
+    return result
+
+
+def _render_products_section(products: list[dict[str, Any]]) -> list[str]:
+    """Render the「北美热销 TOP 产品」markdown section (proxy metrics)."""
+    lines: list[str] = ["## 北美热销 TOP 产品（榜单/评价代理）\n"]
+    products = [p for p in products if isinstance(p, dict)]
+    if not products:
+        lines.append(
+            "（本次未抓到可用的电商榜单数据，主流站点多为 SPA/反爬；本期热销以新闻信号中的热门品牌/产品兜底，详见上文热点话题。）\n"
+        )
+        return lines
+    lines.append("> 口径说明：免费抓取无法获得精确销量（件数/GMV）。下表以**公开榜单排名 + 评分 + 评价数 + 趋势**作为销量代理。")
+    lines.append("")
+    lines.append("| 排名 | 产品 | 品牌 | 子类 | 价格带 | 评分 | 评价数 | 趋势 | 平台 |")
+    lines.append("| --- | --- | --- | --- | --- | --- | --- | --- | --- |")
+    for p in sorted(products, key=lambda x: int(_coerce_number(x.get("rank")) or 999)):
+        def _c(v: Any) -> str:
+            return str(v).replace("|", "/") if v not in (None, "") else "—"
+
+        lines.append(
+            "| {rank} | {name} | {brand} | {sub} | {price} | {rating} | {rev} | {trend} | {plat} |".format(
+                rank=_c(p.get("rank")),
+                name=_c(p.get("name")),
+                brand=_c(p.get("brand")),
+                sub=_c(p.get("subcategory")),
+                price=_c(p.get("price")),
+                rating=_c(p.get("rating")),
+                rev=_c(p.get("review_count")),
+                trend=_c(p.get("trend")),
+                plat=_c(p.get("platform")),
+            )
+        )
+    lines.append("")
+    # 卖点与来源链接
+    for p in sorted(products, key=lambda x: int(_coerce_number(x.get("rank")) or 999)):
+        name = str(p.get("name") or "").strip()
+        if not name:
+            continue
+        why = str(p.get("why_hot") or "").strip()
+        sps = "、".join(p.get("selling_points") or [])
+        url = str(p.get("url") or "").strip()
+        bits = []
+        if why:
+            bits.append(f"为什么火：{why}")
+        if sps:
+            bits.append(f"核心卖点：{sps}")
+        detail = "；".join(bits)
+        line = f"- **{name}**" + (f"（{detail}）" if detail else "")
+        if url:
+            line += f" {url}"
+        lines.append(line)
+    lines.append("")
+    return lines
+
+
 def overseas_render_report_or_fallback(
     *,
     clusters_json: str = "",
@@ -1223,6 +1374,8 @@ def overseas_render_report_or_fallback(
     clusters_path: str | None = None,
     insights_path: str | None = None,
     draft_path: str | None = None,
+    products_json: str = "",
+    products_path: str | None = None,
     out_path: str | None = None,
     frontend_out_path: str | None = None,
 ) -> str | dict[str, Any]:
@@ -1232,6 +1385,22 @@ def overseas_render_report_or_fallback(
         insights_json = _read_text_file(insights_path)
     if draft_path:
         draft_markdown = _read_text_file(draft_path)
+    if products_path:
+        try:
+            products_json = _read_text_file(products_path)
+        except OSError:
+            products_json = ""
+
+    products_list: list[dict[str, Any]] = []
+    if products_json:
+        try:
+            pobj = _extract_json(products_json)
+            if isinstance(pobj, dict):
+                pobj = pobj.get("products")
+            if isinstance(pobj, list):
+                products_list = [p for p in pobj if isinstance(p, dict)]
+        except Exception:
+            products_list = []
 
     def _emit(final_md: str, mode: str) -> str | dict[str, Any]:
         written = _write_text_files(final_md, [out_path, frontend_out_path])
@@ -1401,6 +1570,9 @@ def overseas_render_report_or_fallback(
     else:
         lines.append("（未提取到产品信号）\n")
 
+    # 北美热销 TOP 产品（榜单/评价代理）
+    lines.extend(_render_products_section(products_list))
+
     # 分市场速览
     lines.append("## 分市场速览\n")
     any_market = False
@@ -1474,4 +1646,5 @@ def register_tools(registry: object) -> None:
     register("overseas.load_articles_from_disk", overseas_load_articles_from_disk)
     register("overseas.cluster_or_fallback", overseas_cluster_or_fallback)
     register("overseas.insight_or_fallback", overseas_insight_or_fallback)
+    register("overseas.products_or_fallback", overseas_products_or_fallback)
     register("overseas.render_report_or_fallback", overseas_render_report_or_fallback)

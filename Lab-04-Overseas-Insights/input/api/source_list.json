@@ -57,6 +57,59 @@
     "category": "beauty",
     "markets": ["na"],
     "fetchable": "research-only",
+    "research_kind": "bestseller",
     "include_keywords": ["bestseller", "ranking", "hot product", "爆品"]
+  },
+  {
+    "id": 6,
+    "name": "Sephora Bestsellers",
+    "platform": "sephora-bestsellers",
+    "source": "html",
+    "url": "https://www.sephora.com/beauty/bestsellers",
+    "signal_level": "S",
+    "category": "beauty",
+    "markets": ["na"],
+    "fetchable": "research-only",
+    "research_kind": "bestseller",
+    "include_keywords": ["bestseller", "ranking", "rating", "reviews", "爆品"]
+  },
+  {
+    "id": 7,
+    "name": "Ulta Best Sellers",
+    "platform": "ulta-bestsellers",
+    "source": "html",
+    "url": "https://www.ulta.com/promotion/best-sellers",
+    "signal_level": "S",
+    "category": "beauty",
+    "markets": ["na"],
+    "fetchable": "research-only",
+    "research_kind": "bestseller",
+    "include_keywords": ["bestseller", "ranking", "rating", "reviews", "爆品"]
+  },
+  {
+    "id": 8,
+    "name": "Target Beauty Bestsellers",
+    "platform": "target-beauty-bestsellers",
+    "source": "html",
+    "url": "https://www.target.com/c/beauty/-/N-5xtfz",
+    "signal_level": "A",
+    "category": "beauty",
+    "markets": ["na"],
+    "fetchable": "research-only",
+    "research_kind": "bestseller",
+    "include_keywords": ["bestseller", "trending", "beauty", "爆品"]
+  },
+  {
+    "id": 9,
+    "name": "TikTok Shop (Beauty Trending)",
+    "platform": "tiktok-shop-beauty",
+    "source": "html",
+    "url": "https://shop.tiktok.com/",
+    "signal_level": "S",
+    "category": "beauty",
+    "markets": ["na"],
+    "fetchable": "research-only",
+    "research_kind": "bestseller",
+    "include_keywords": ["trending", "viral", "tiktok made me buy it", "爆品", "社媒电商"]
   }
 ]

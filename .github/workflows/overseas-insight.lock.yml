@@ -1,4 +1,4 @@
-# gh-aw-metadata: {"schema_version":"v4","frontmatter_hash":"8ce3a29c8a273b4ef79e59b11e1f40b6bdc66f8cb4e81ba23b6242ad380670f2","body_hash":"2d9f23f45f4552aed5d7a8e19eb32d16cedc869e74bcb11d53cae73bd871b98d","compiler_version":"v0.77.5","agent_id":"copilot"}
+# gh-aw-metadata: {"schema_version":"v4","frontmatter_hash":"d5cb1514834971977e5636e787c064ddbc6ff6eace1da1ebe91cd856992e4370","body_hash":"58958a3716789d781cb50eae4e54d991856574c49413f8c0e762c9ff05009f74","compiler_version":"v0.77.5","agent_id":"copilot"}
 # gh-aw-manifest: {"version":1,"secrets":["COPILOT_GITHUB_TOKEN","GH_AW_CI_TRIGGER_TOKEN","GH_AW_GITHUB_MCP_SERVER_TOKEN","GH_AW_GITHUB_TOKEN","GITHUB_TOKEN"],"actions":[{"repo":"actions/checkout","sha":"de0fac2e4500dabe0009e67214ff5f5447ce83dd","version":"v6.0.2"},{"repo":"actions/download-artifact","sha":"3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c","version":"v8.0.1"},{"repo":"actions/github-script","sha":"3a2844b7e9c422d3c10d287c895573f7108da1b3","version":"v9.0.0"},{"repo":"actions/setup-node","sha":"48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e","version":"v6.4.0"},{"repo":"actions/setup-python","sha":"a26af69be951a213d495a4c3e4e4022e16d87065","version":"v5"},{"repo":"actions/upload-artifact","sha":"043fb46d1a93c77aae656e7c1c64a875d1fc6a0a","version":"v7.0.1"},{"repo":"github/gh-aw-actions/setup","sha":"3ea13c02d765410340d533515cb31a7eef2baaf0","version":"v0.77.5"}],"containers":[{"image":"ghcr.io/github/gh-aw-firewall/agent:0.25.58"},{"image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.25.58"},{"image":"ghcr.io/github/gh-aw-firewall/squid:0.25.58"},{"image":"ghcr.io/github/gh-aw-mcpg:v0.3.22"},{"image":"ghcr.io/github/github-mcp-server:v1.1.0"},{"image":"node:lts-alpine","digest":"sha256:2bdb65ed1dab192432bc31c95f94155ca5ad7fc1392fb7eb7526ab682fa5bf14","pinned_image":"node:lts-alpine@sha256:2bdb65ed1dab192432bc31c95f94155ca5ad7fc1392fb7eb7526ab682fa5bf14"}]}
 #    ___                   _   _      
 #   / _ \                 | | (_)     
@@ -110,7 +110,7 @@ jobs:
           GH_AW_INFO_EXPERIMENTAL: "false"
           GH_AW_INFO_SUPPORTS_TOOLS_ALLOWLIST: "true"
           GH_AW_INFO_STAGED: "false"
-          GH_AW_INFO_ALLOWED_DOMAINS: '["defaults","python","www.glossy.co","wwd.com","www.modernretail.co","www.beautyindependent.com","www.amazon.com"]'
+          GH_AW_INFO_ALLOWED_DOMAINS: '["defaults","python","www.glossy.co","wwd.com","www.modernretail.co","www.beautyindependent.com","www.amazon.com","www.sephora.com","www.ulta.com","www.target.com","shop.tiktok.com","www.tiktok.com"]'
           GH_AW_INFO_FIREWALL_ENABLED: "true"
           GH_AW_INFO_AWF_VERSION: "v0.25.58"
           GH_AW_INFO_AWMG_VERSION: ""
@@ -188,23 +188,23 @@ jobs:
         run: |
           bash "${RUNNER_TEMP}/gh-aw/actions/create_prompt_first.sh"
           {
-          cat << 'GH_AW_PROMPT_848eae5fd3726174_EOF'
+          cat << 'GH_AW_PROMPT_094cfa407b1b732b_EOF'
           <system>
-          GH_AW_PROMPT_848eae5fd3726174_EOF
+          GH_AW_PROMPT_094cfa407b1b732b_EOF
           cat "${RUNNER_TEMP}/gh-aw/prompts/xpia.md"
           cat "${RUNNER_TEMP}/gh-aw/prompts/temp_folder_prompt.md"
           cat "${RUNNER_TEMP}/gh-aw/prompts/markdown.md"
           cat "${RUNNER_TEMP}/gh-aw/prompts/safe_outputs_prompt.md"
-          cat << 'GH_AW_PROMPT_848eae5fd3726174_EOF'
+          cat << 'GH_AW_PROMPT_094cfa407b1b732b_EOF'
           <safe-output-tools>
           Tools: create_pull_request, missing_tool, missing_data, noop
-          GH_AW_PROMPT_848eae5fd3726174_EOF
+          GH_AW_PROMPT_094cfa407b1b732b_EOF
           cat "${RUNNER_TEMP}/gh-aw/prompts/safe_outputs_create_pull_request.md"
-          cat << 'GH_AW_PROMPT_848eae5fd3726174_EOF'
+          cat << 'GH_AW_PROMPT_094cfa407b1b732b_EOF'
           </safe-output-tools>
-          GH_AW_PROMPT_848eae5fd3726174_EOF
+          GH_AW_PROMPT_094cfa407b1b732b_EOF
           cat "${RUNNER_TEMP}/gh-aw/prompts/mcp_cli_tools_prompt.md"
-          cat << 'GH_AW_PROMPT_848eae5fd3726174_EOF'
+          cat << 'GH_AW_PROMPT_094cfa407b1b732b_EOF'
           <github-context>
           The following GitHub context information is available for this workflow:
           {{#if github.actor}}
@@ -233,12 +233,12 @@ jobs:
           {{/if}}
           </github-context>
           
-          GH_AW_PROMPT_848eae5fd3726174_EOF
+          GH_AW_PROMPT_094cfa407b1b732b_EOF
           cat "${RUNNER_TEMP}/gh-aw/prompts/github_mcp_tools_with_safeoutputs_prompt.md"
-          cat << 'GH_AW_PROMPT_848eae5fd3726174_EOF'
+          cat << 'GH_AW_PROMPT_094cfa407b1b732b_EOF'
           </system>
           {{#runtime-import .github/workflows/overseas-insight.md}}
-          GH_AW_PROMPT_848eae5fd3726174_EOF
+          GH_AW_PROMPT_094cfa407b1b732b_EOF
           } > "$GH_AW_PROMPT"
       - name: Interpolate variables and render templates
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -457,9 +457,9 @@ jobs:
           mkdir -p "${RUNNER_TEMP}/gh-aw/safeoutputs"
           mkdir -p /tmp/gh-aw/safeoutputs
           mkdir -p /tmp/gh-aw/mcp-logs/safeoutputs
-          cat > "${RUNNER_TEMP}/gh-aw/safeoutputs/config.json" << 'GH_AW_SAFE_OUTPUTS_CONFIG_587d9a9ce8c2feba_EOF'
+          cat > "${RUNNER_TEMP}/gh-aw/safeoutputs/config.json" << 'GH_AW_SAFE_OUTPUTS_CONFIG_6cfba8512dc6b3bc_EOF'
           {"create_pull_request":{"labels":["automation","overseas-insight"],"max":1,"max_patch_files":100,"max_patch_size":1024,"protect_top_level_dot_folders":true,"protected_files":["package.json","bun.lockb","bunfig.toml","deno.json","deno.jsonc","deno.lock","global.json","NuGet.Config","Directory.Packages.props","mix.exs","mix.lock","go.mod","go.sum","stack.yaml","stack.yaml.lock","pom.xml","build.gradle","build.gradle.kts","settings.gradle","settings.gradle.kts","gradle.properties","package-lock.json","yarn.lock","pnpm-lock.yaml","npm-shrinkwrap.json","requirements.txt","Pipfile","Pipfile.lock","pyproject.toml","setup.py","setup.cfg","Gemfile","Gemfile.lock","uv.lock","CODEOWNERS","DESIGN.md","README.md","CONTRIBUTING.md","CHANGELOG.md","SECURITY.md","CODE_OF_CONDUCT.md","AGENTS.md","CLAUDE.md","GEMINI.md"],"protected_files_policy":"request_review","title_prefix":"[overseas-insight] "},"create_report_incomplete_issue":{},"missing_data":{},"missing_tool":{},"noop":{"max":1,"report-as-issue":"true"},"report_incomplete":{}}
-          GH_AW_SAFE_OUTPUTS_CONFIG_587d9a9ce8c2feba_EOF
+          GH_AW_SAFE_OUTPUTS_CONFIG_6cfba8512dc6b3bc_EOF
       - name: Generate Safe Outputs Tools
         env:
           GH_AW_TOOLS_META_JSON: |
@@ -637,7 +637,7 @@ jobs:
       - name: Write MCP Scripts Config
         run: |
           mkdir -p "${RUNNER_TEMP}/gh-aw/mcp-scripts/logs"
-          cat > "${RUNNER_TEMP}/gh-aw/mcp-scripts/tools.json" << 'GH_AW_MCP_SCRIPTS_TOOLS_f4b895e35add91b3_EOF'
+          cat > "${RUNNER_TEMP}/gh-aw/mcp-scripts/tools.json" << 'GH_AW_MCP_SCRIPTS_TOOLS_1547c3dc1d3c72f3_EOF'
           {
             "serverName": "mcpscripts",
             "version": "1.0.0",
@@ -782,6 +782,34 @@ jobs:
                 "timeout": 60
               },
               {
+                "name": "overseas-products-or-fallback",
+                "description": "校验+兜底「北美热销 TOP5 产品」清单（排名/评分/评价数/趋势为销量代理，无精确件数/GMV）。用路径参数 products_candidate_path / out_path；工具会把最终 TOP5 写入 out_path，候选不可用时回退为空清单并附缺口说明（绝不编造销量）。",
+                "inputSchema": {
+                  "properties": {
+                    "out_path": {
+                      "description": "",
+                      "type": "string"
+                    },
+                    "products_candidate_path": {
+                      "description": "",
+                      "type": "string"
+                    },
+                    "products_json": {
+                      "description": "",
+                      "type": "string"
+                    },
+                    "top_n": {
+                      "default": 5,
+                      "description": "",
+                      "type": "number"
+                    }
+                  },
+                  "type": "object"
+                },
+                "handler": "overseas-products-or-fallback.sh",
+                "timeout": 60
+              },
+              {
                 "name": "overseas-read-source-list",
                 "description": "Read overseas source list configuration",
                 "inputSchema": {
@@ -801,7 +829,7 @@ jobs:
               },
               {
                 "name": "overseas-render-report-or-fallback",
-                "description": "校验+兜底报告渲染。强烈建议用文件路径参数（clusters_path / insights_path / draft_path / out_path / frontend_out_path）。工具会把最终 Markdown 同时写入 out_path 与 frontend_out_path，返回精简状态（无需再用 edit 写文件）。",
+                "description": "校验+兜底报告渲染。强烈建议用文件路径参数（clusters_path / insights_path / products_path / draft_path / out_path / frontend_out_path）。工具会把最终 Markdown 同时写入 out_path 与 frontend_out_path，返回精简状态（无需再用 edit 写文件）。",
                 "inputSchema": {
                   "properties": {
                     "clusters_json": {
@@ -833,6 +861,10 @@ jobs:
                       "type": "string"
                     },
                     "out_path": {
+                      "description": "",
+                      "type": "string"
+                    },
+                    "products_path": {
                       "description": "",
                       "type": "string"
                     }
@@ -872,8 +904,8 @@ jobs:
               }
             ]
           }
-          GH_AW_MCP_SCRIPTS_TOOLS_f4b895e35add91b3_EOF
-          cat > "${RUNNER_TEMP}/gh-aw/mcp-scripts/mcp-server.cjs" << 'GH_AW_MCP_SCRIPTS_SERVER_ea1a11a8d3ea7eb6_EOF'
+          GH_AW_MCP_SCRIPTS_TOOLS_1547c3dc1d3c72f3_EOF
+          cat > "${RUNNER_TEMP}/gh-aw/mcp-scripts/mcp-server.cjs" << 'GH_AW_MCP_SCRIPTS_SERVER_a01ece560b3d3b1b_EOF'
             const path = require("path");
             const { startHttpServer } = require("./mcp_scripts_mcp_server_http.cjs");
             const configPath = path.join(__dirname, "tools.json");
@@ -887,12 +919,12 @@ jobs:
               console.error("Failed to start mcp-scripts HTTP server:", error);
               process.exit(1);
             });
-          GH_AW_MCP_SCRIPTS_SERVER_ea1a11a8d3ea7eb6_EOF
+          GH_AW_MCP_SCRIPTS_SERVER_a01ece560b3d3b1b_EOF
           chmod +x "${RUNNER_TEMP}/gh-aw/mcp-scripts/mcp-server.cjs"
           
       - name: Write MCP Scripts Tool Files
         run: |
-          cat > "${RUNNER_TEMP}/gh-aw/mcp-scripts/overseas-cluster-or-fallback.sh" << 'GH_AW_MCP_SCRIPTS_SH_OVERSEAS-CLUSTER-OR-FALLBACK_5f4d603e2cd40e1d_EOF'
+          cat > "${RUNNER_TEMP}/gh-aw/mcp-scripts/overseas-cluster-or-fallback.sh" << 'GH_AW_MCP_SCRIPTS_SH_OVERSEAS-CLUSTER-OR-FALLBACK_7c6340ed739330e3_EOF'
           #!/bin/bash
           # Auto-generated mcp-script tool: overseas-cluster-or-fallback
           # 校验+兜底聚类结果。强烈建议用文件路径参数（raw_signals_path / clusters_candidate_path / out_path），避免把大 JSON 作为字符串参数传入（网关对单参数有 10KB 上限）。工具会把最终热点写入 out_path。
@@ -904,9 +936,9 @@ jobs:
           python3 -c "import os, json, sys, subprocess; payload = json.dumps({'raw_signals_json': os.environ.get('INPUT_RAW_SIGNALS_JSON', ''), 'clusters_json': os.environ.get('INPUT_CLUSTERS_JSON', ''), 'top_k': int(os.environ.get('INPUT_TOP_K') or 9), 'raw_signals_path': os.environ.get('INPUT_RAW_SIGNALS_PATH', ''), 'clusters_candidate_path': os.environ.get('INPUT_CLUSTERS_CANDIDATE_PATH', ''), 'out_path': os.environ.get('INPUT_OUT_PATH', '')}); sys.exit(subprocess.run([sys.executable, 'Lab-04-Overseas-Insights/mcp-scripts/overseas_cluster_or_fallback.py'], input=payload, text=True).returncode)"
           
           
-          GH_AW_MCP_SCRIPTS_SH_OVERSEAS-CLUSTER-OR-FALLBACK_5f4d603e2cd40e1d_EOF
+          GH_AW_MCP_SCRIPTS_SH_OVERSEAS-CLUSTER-OR-FALLBACK_7c6340ed739330e3_EOF
           chmod +x "${RUNNER_TEMP}/gh-aw/mcp-scripts/overseas-cluster-or-fallback.sh"
-          cat > "${RUNNER_TEMP}/gh-aw/mcp-scripts/overseas-fetch-all-to-disk.sh" << 'GH_AW_MCP_SCRIPTS_SH_OVERSEAS-FETCH-ALL-TO-DISK_b9f0cbdcdc053678_EOF'
+          cat > "${RUNNER_TEMP}/gh-aw/mcp-scripts/overseas-fetch-all-to-disk.sh" << 'GH_AW_MCP_SCRIPTS_SH_OVERSEAS-FETCH-ALL-TO-DISK_e5a3bdfa9556856c_EOF'
           #!/bin/bash
           # Auto-generated mcp-script tool: overseas-fetch-all-to-disk
           # Fetch all baseline (RSS) sources to disk; research-only sources are skipped
@@ -930,9 +962,9 @@ jobs:
           "
           
           
-          GH_AW_MCP_SCRIPTS_SH_OVERSEAS-FETCH-ALL-TO-DISK_b9f0cbdcdc053678_EOF
+          GH_AW_MCP_SCRIPTS_SH_OVERSEAS-FETCH-ALL-TO-DISK_e5a3bdfa9556856c_EOF
           chmod +x "${RUNNER_TEMP}/gh-aw/mcp-scripts/overseas-fetch-all-to-disk.sh"
-          cat > "${RUNNER_TEMP}/gh-aw/mcp-scripts/overseas-insight-or-fallback.sh" << 'GH_AW_MCP_SCRIPTS_SH_OVERSEAS-INSIGHT-OR-FALLBACK_e153568b5e30c9b0_EOF'
+          cat > "${RUNNER_TEMP}/gh-aw/mcp-scripts/overseas-insight-or-fallback.sh" << 'GH_AW_MCP_SCRIPTS_SH_OVERSEAS-INSIGHT-OR-FALLBACK_4f90ce21ac8fce1d_EOF'
           #!/bin/bash
           # Auto-generated mcp-script tool: overseas-insight-or-fallback
           # 校验+兜底洞察结果。强烈建议用文件路径参数（clusters_path / insights_candidate_path / out_path），避免把大 JSON 作为字符串参数传入（单参数 10KB 上限）。工具会把最终洞察写入 out_path。
@@ -944,9 +976,9 @@ jobs:
           python3 -c "import os, json, sys, subprocess; payload = json.dumps({'clusters_json': os.environ.get('INPUT_CLUSTERS_JSON', ''), 'insights_json': os.environ.get('INPUT_INSIGHTS_JSON', ''), 'clusters_path': os.environ.get('INPUT_CLUSTERS_PATH', ''), 'insights_candidate_path': os.environ.get('INPUT_INSIGHTS_CANDIDATE_PATH', ''), 'out_path': os.environ.get('INPUT_OUT_PATH', '')}); sys.exit(subprocess.run([sys.executable, 'Lab-04-Overseas-Insights/mcp-scripts/overseas_insight_or_fallback.py'], input=payload, text=True).returncode)"
           
           
-          GH_AW_MCP_SCRIPTS_SH_OVERSEAS-INSIGHT-OR-FALLBACK_e153568b5e30c9b0_EOF
+          GH_AW_MCP_SCRIPTS_SH_OVERSEAS-INSIGHT-OR-FALLBACK_4f90ce21ac8fce1d_EOF
           chmod +x "${RUNNER_TEMP}/gh-aw/mcp-scripts/overseas-insight-or-fallback.sh"
-          cat > "${RUNNER_TEMP}/gh-aw/mcp-scripts/overseas-load-articles-from-disk.sh" << 'GH_AW_MCP_SCRIPTS_SH_OVERSEAS-LOAD-ARTICLES-FROM-DISK_7b11b75b6218d317_EOF'
+          cat > "${RUNNER_TEMP}/gh-aw/mcp-scripts/overseas-load-articles-from-disk.sh" << 'GH_AW_MCP_SCRIPTS_SH_OVERSEAS-LOAD-ARTICLES-FROM-DISK_8691524af4459b54_EOF'
           #!/bin/bash
           # Auto-generated mcp-script tool: overseas-load-articles-from-disk
           # Load and filter valid articles from disk
@@ -969,9 +1001,23 @@ jobs:
           "
           
           
-          GH_AW_MCP_SCRIPTS_SH_OVERSEAS-LOAD-ARTICLES-FROM-DISK_7b11b75b6218d317_EOF
+          GH_AW_MCP_SCRIPTS_SH_OVERSEAS-LOAD-ARTICLES-FROM-DISK_8691524af4459b54_EOF
           chmod +x "${RUNNER_TEMP}/gh-aw/mcp-scripts/overseas-load-articles-from-disk.sh"
-          cat > "${RUNNER_TEMP}/gh-aw/mcp-scripts/overseas-read-source-list.sh" << 'GH_AW_MCP_SCRIPTS_SH_OVERSEAS-READ-SOURCE-LIST_536db37a78350e3d_EOF'
+          cat > "${RUNNER_TEMP}/gh-aw/mcp-scripts/overseas-products-or-fallback.sh" << 'GH_AW_MCP_SCRIPTS_SH_OVERSEAS-PRODUCTS-OR-FALLBACK_05233b1aa320e8e3_EOF'
+          #!/bin/bash
+          # Auto-generated mcp-script tool: overseas-products-or-fallback
+          # 校验+兜底「北美热销 TOP5 产品」清单（排名/评分/评价数/趋势为销量代理，无精确件数/GMV）。用路径参数 products_candidate_path / out_path；工具会把最终 TOP5 写入 out_path，候选不可用时回退为空清单并附缺口说明（绝不编造销量）。
+          
+          set +o histexpand
+          set -euo pipefail
+          
+          cd "$GITHUB_WORKSPACE"
+          python3 -c "import os, json, sys, subprocess; payload = json.dumps({'products_json': os.environ.get('INPUT_PRODUCTS_JSON', ''), 'products_candidate_path': os.environ.get('INPUT_PRODUCTS_CANDIDATE_PATH', ''), 'out_path': os.environ.get('INPUT_OUT_PATH', ''), 'top_n': int(os.environ.get('INPUT_TOP_N') or 5)}); sys.exit(subprocess.run([sys.executable, 'Lab-04-Overseas-Insights/mcp-scripts/overseas_products_or_fallback.py'], input=payload, text=True).returncode)"
+          
+          
+          GH_AW_MCP_SCRIPTS_SH_OVERSEAS-PRODUCTS-OR-FALLBACK_05233b1aa320e8e3_EOF
+          chmod +x "${RUNNER_TEMP}/gh-aw/mcp-scripts/overseas-products-or-fallback.sh"
+          cat > "${RUNNER_TEMP}/gh-aw/mcp-scripts/overseas-read-source-list.sh" << 'GH_AW_MCP_SCRIPTS_SH_OVERSEAS-READ-SOURCE-LIST_a5311b839bb9b480_EOF'
           #!/bin/bash
           # Auto-generated mcp-script tool: overseas-read-source-list
           # Read overseas source list configuration
@@ -983,23 +1029,23 @@ jobs:
           echo "{\"source_list_path\": \"$INPUT_SOURCE_LIST_PATH\"}" | python3 Lab-04-Overseas-Insights/mcp-scripts/overseas_read_source_list.py
           
           
-          GH_AW_MCP_SCRIPTS_SH_OVERSEAS-READ-SOURCE-LIST_536db37a78350e3d_EOF
+          GH_AW_MCP_SCRIPTS_SH_OVERSEAS-READ-SOURCE-LIST_a5311b839bb9b480_EOF
           chmod +x "${RUNNER_TEMP}/gh-aw/mcp-scripts/overseas-read-source-list.sh"
-          cat > "${RUNNER_TEMP}/gh-aw/mcp-scripts/overseas-render-report-or-fallback.sh" << 'GH_AW_MCP_SCRIPTS_SH_OVERSEAS-RENDER-REPORT-OR-FALLBACK_2c028a70f50b3f43_EOF'
+          cat > "${RUNNER_TEMP}/gh-aw/mcp-scripts/overseas-render-report-or-fallback.sh" << 'GH_AW_MCP_SCRIPTS_SH_OVERSEAS-RENDER-REPORT-OR-FALLBACK_8707a2ba839f51de_EOF'
           #!/bin/bash
           # Auto-generated mcp-script tool: overseas-render-report-or-fallback
-          # 校验+兜底报告渲染。强烈建议用文件路径参数（clusters_path / insights_path / draft_path / out_path / frontend_out_path）。工具会把最终 Markdown 同时写入 out_path 与 frontend_out_path，返回精简状态（无需再用 edit 写文件）。
+          # 校验+兜底报告渲染。强烈建议用文件路径参数（clusters_path / insights_path / products_path / draft_path / out_path / frontend_out_path）。工具会把最终 Markdown 同时写入 out_path 与 frontend_out_path，返回精简状态（无需再用 edit 写文件）。
           
           set +o histexpand
           set -euo pipefail
           
           cd "$GITHUB_WORKSPACE"
-          python3 -c "import os, json, sys, subprocess; payload = json.dumps({'clusters_json': os.environ.get('INPUT_CLUSTERS_JSON', ''), 'insights_json': os.environ.get('INPUT_INSIGHTS_JSON', ''), 'draft_markdown': os.environ.get('INPUT_DRAFT_MARKDOWN', ''), 'clusters_path': os.environ.get('INPUT_CLUSTERS_PATH', ''), 'insights_path': os.environ.get('INPUT_INSIGHTS_PATH', ''), 'draft_path': os.environ.get('INPUT_DRAFT_PATH', ''), 'out_path': os.environ.get('INPUT_OUT_PATH', ''), 'frontend_out_path': os.environ.get('INPUT_FRONTEND_OUT_PATH', '')}); sys.exit(subprocess.run([sys.executable, 'Lab-04-Overseas-Insights/mcp-scripts/overseas_render_report_or_fallback.py'], input=payload, text=True).returncode)"
+          python3 -c "import os, json, sys, subprocess; payload = json.dumps({'clusters_json': os.environ.get('INPUT_CLUSTERS_JSON', ''), 'insights_json': os.environ.get('INPUT_INSIGHTS_JSON', ''), 'draft_markdown': os.environ.get('INPUT_DRAFT_MARKDOWN', ''), 'clusters_path': os.environ.get('INPUT_CLUSTERS_PATH', ''), 'insights_path': os.environ.get('INPUT_INSIGHTS_PATH', ''), 'products_path': os.environ.get('INPUT_PRODUCTS_PATH', ''), 'draft_path': os.environ.get('INPUT_DRAFT_PATH', ''), 'out_path': os.environ.get('INPUT_OUT_PATH', ''), 'frontend_out_path': os.environ.get('INPUT_FRONTEND_OUT_PATH', '')}); sys.exit(subprocess.run([sys.executable, 'Lab-04-Overseas-Insights/mcp-scripts/overseas_render_report_or_fallback.py'], input=payload, text=True).returncode)"
           
           
-          GH_AW_MCP_SCRIPTS_SH_OVERSEAS-RENDER-REPORT-OR-FALLBACK_2c028a70f50b3f43_EOF
+          GH_AW_MCP_SCRIPTS_SH_OVERSEAS-RENDER-REPORT-OR-FALLBACK_8707a2ba839f51de_EOF
           chmod +x "${RUNNER_TEMP}/gh-aw/mcp-scripts/overseas-render-report-or-fallback.sh"
-          cat > "${RUNNER_TEMP}/gh-aw/mcp-scripts/write-text-file.sh" << 'GH_AW_MCP_SCRIPTS_SH_WRITE-TEXT-FILE_e3244e8d4e75bd2a_EOF'
+          cat > "${RUNNER_TEMP}/gh-aw/mcp-scripts/write-text-file.sh" << 'GH_AW_MCP_SCRIPTS_SH_WRITE-TEXT-FILE_1605da6daee56e38_EOF'
           #!/bin/bash
           # Auto-generated mcp-script tool: write-text-file
           # Write text content to a file
@@ -1011,7 +1057,7 @@ jobs:
           python3 -c "import os, json, sys, subprocess; payload = json.dumps({'path': os.environ.get('INPUT_PATH', ''), 'text': os.environ.get('INPUT_TEXT', ''), 'overwrite': os.environ.get('INPUT_OVERWRITE', 'true').strip().lower() not in ('false', '0', 'no')}); sys.exit(subprocess.run([sys.executable, 'Lab-04-Overseas-Insights/mcp-scripts/write_text_file.py'], input=payload, text=True).returncode)"
           
           
-          GH_AW_MCP_SCRIPTS_SH_WRITE-TEXT-FILE_e3244e8d4e75bd2a_EOF
+          GH_AW_MCP_SCRIPTS_SH_WRITE-TEXT-FILE_1605da6daee56e38_EOF
           chmod +x "${RUNNER_TEMP}/gh-aw/mcp-scripts/write-text-file.sh"
           
       - name: Generate MCP Scripts Server Config
@@ -1086,7 +1132,7 @@ jobs:
           
           mkdir -p /home/runner/.copilot
           GH_AW_NODE=$(which node 2>/dev/null || command -v node 2>/dev/null || echo node)
-          cat << GH_AW_MCP_CONFIG_4c223d5a72b7fcbd_EOF | "$GH_AW_NODE" "${RUNNER_TEMP}/gh-aw/actions/start_mcp_gateway.cjs"
+          cat << GH_AW_MCP_CONFIG_46735f0a4553e36d_EOF | "$GH_AW_NODE" "${RUNNER_TEMP}/gh-aw/actions/start_mcp_gateway.cjs"
           {
             "mcpServers": {
               "github": {
@@ -1141,7 +1187,7 @@ jobs:
               "payloadDir": "${MCP_GATEWAY_PAYLOAD_DIR}"
             }
           }
-          GH_AW_MCP_CONFIG_4c223d5a72b7fcbd_EOF
+          GH_AW_MCP_CONFIG_46735f0a4553e36d_EOF
       - name: Mount MCP servers as CLIs
         id: mount-mcp-clis
         continue-on-error: true
@@ -1175,7 +1221,7 @@ jobs:
           export GH_AW_NODE_BIN
           export COPILOT_API_KEY="$COPILOT_DUMMY_BYOK"
           (umask 177 && touch /tmp/gh-aw/agent-stdio.log)
-          printf '%s\n' '{"$schema":"https://github.com/github/gh-aw-firewall/releases/download/v0.25.58/awf-config.schema.json","network":{"allowDomains":["*.pythonhosted.org","anaconda.org","api.business.githubcopilot.com","api.enterprise.githubcopilot.com","api.github.com","api.githubcopilot.com","api.individual.githubcopilot.com","api.snapcraft.io","archive.ubuntu.com","azure.archive.ubuntu.com","binstar.org","bootstrap.pypa.io","conda.anaconda.org","conda.binstar.org","crl.geotrust.com","crl.globalsign.com","crl.identrust.com","crl.sectigo.com","crl.thawte.com","crl.usertrust.com","crl.verisign.com","crl3.digicert.com","crl4.digicert.com","crls.ssl.com","files.pythonhosted.org","github.com","host.docker.internal","json-schema.org","json.schemastore.org","keyserver.ubuntu.com","ocsp.digicert.com","ocsp.geotrust.com","ocsp.globalsign.com","ocsp.identrust.com","ocsp.sectigo.com","ocsp.ssl.com","ocsp.thawte.com","ocsp.usertrust.com","ocsp.verisign.com","packagecloud.io","packages.cloud.google.com","packages.microsoft.com","pip.pypa.io","ppa.launchpad.net","pypi.org","pypi.python.org","raw.githubusercontent.com","registry.npmjs.org","repo.anaconda.com","repo.continuum.io","s.symcb.com","s.symcd.com","security.ubuntu.com","telemetry.enterprise.githubcopilot.com","ts-crl.ws.symantec.com","ts-ocsp.ws.symantec.com","wwd.com","www.amazon.com","www.beautyindependent.com","www.glossy.co","www.googleapis.com","www.modernretail.co"]},"apiProxy":{"enabled":true,"enableTokenSteering":true,"maxRuns":500,"maxEffectiveTokens":25000000,"models":{"agent":["sonnet-6x","gpt-5.4","gpt-5.3","gemini-pro","any"],"antigravity":["copilot/antigravity*","google/antigravity*","gemini/antigravity*"],"any":["copilot/*","anthropic/*","openai/*","google/*","gemini/*"],"claude":["agent"],"codex":["agent"],"coding":["copilot/gpt-5*codex*","openai/gpt-5*codex*","gpt-5-codex"],"computer-use":["copilot/*computer-use*","google/*computer-use*","gemini/*computer-use*","openai/*computer-use*"],"copilot":["agent"],"deep-research":["copilot/deep-research*","copilot/o3-deep-research*","copilot/o4-mini-deep-research*","google/deep-research*","gemini/deep-research*","openai/o3-deep-research*","openai/o4-mini-deep-research*"],"gemini":["agent"],"gemini-3-flash":["copilot/gemini-3*flash*","google/gemini-3*flash*","gemini/gemini-3*flash*"],"gemini-3-pro":["copilot/gemini-3*pro*","google/gemini-3*pro*","gemini/gemini-3*pro*"],"gemini-3.1-flash":["copilot/gemini-3.1*flash*","google/gemini-3.1*flash*","gemini/gemini-3.1*flash*"],"gemini-3.1-pro":["copilot/gemini-3.1*pro*","google/gemini-3.1*pro*","gemini/gemini-3.1*pro*"],"gemini-3.5-flash":["copilot/gemini-3.5*flash*","google/gemini-3.5*flash*","gemini/gemini-3.5*flash*"],"gemini-flash":["copilot/gemini-*flash*","google/gemini-*flash*","gemini/gemini-*flash*"],"gemini-flash-lite":["copilot/gemini-*flash*lite*","google/gemini-*flash*lite*","gemini/gemini-*flash*lite*"],"gemini-pro":["copilot/gemini-*pro*","google/gemini-*pro*","gemini/gemini-*pro*"],"gemma":["copilot/gemma*","google/gemma*","gemini/gemma*"],"gpt-5":["copilot/gpt-5*","openai/gpt-5*"],"gpt-5-codex":["copilot/gpt-5*codex*","openai/gpt-5*codex*"],"gpt-5-mini":["copilot/gpt-5*mini*","openai/gpt-5*mini*"],"gpt-5-nano":["copilot/gpt-5*nano*","openai/gpt-5*nano*"],"gpt-5-pro":["copilot/gpt-5*pro*","openai/gpt-5*pro*"],"gpt-5.2":["copilot/gpt-5.2*","openai/gpt-5.2*"],"gpt-5.3":["copilot/gpt-5.3*","openai/gpt-5.3*"],"gpt-5.4":["copilot/gpt-5.4*","openai/gpt-5.4*"],"gpt-5.5":["copilot/gpt-5.5*","openai/gpt-5.5*"],"haiku":["copilot/*haiku*","anthropic/*haiku*"],"large":["sonnet","gpt-5-pro","gpt-5","gemini-pro"],"mini":["haiku","gpt-5-mini","gpt-5-nano","gemini-flash-lite"],"opus":["copilot/*opus*","anthropic/*opus*"],"opusplan":["opus?effort=high"],"reasoning":["copilot/o1*","copilot/o3*","copilot/o4*","openai/o1*","openai/o3*","openai/o4*"],"robotics":["copilot/*robotics*","google/*robotics*","gemini/*robotics*"],"small":["mini"],"sonnet":["copilot/*sonnet*","anthropic/*sonnet*"],"sonnet-6x":["copilot/*sonnet-4-5-*","anthropic/*sonnet-4-5-*","copilot/*sonnet-4-6*","anthropic/*sonnet-4-6*"],"summarization":["haiku","gpt-5-mini","gemini-flash-lite","mini"],"vision":["copilot/gemini-*image*","gemini/gemini-*image*","copilot/gemini-*flash*","gemini/gemini-*flash*"]}},"container":{"imageTag":"0.25.58"}}' > "${RUNNER_TEMP}/gh-aw/awf-config.json"
+          printf '%s\n' '{"$schema":"https://github.com/github/gh-aw-firewall/releases/download/v0.25.58/awf-config.schema.json","network":{"allowDomains":["*.pythonhosted.org","anaconda.org","api.business.githubcopilot.com","api.enterprise.githubcopilot.com","api.github.com","api.githubcopilot.com","api.individual.githubcopilot.com","api.snapcraft.io","archive.ubuntu.com","azure.archive.ubuntu.com","binstar.org","bootstrap.pypa.io","conda.anaconda.org","conda.binstar.org","crl.geotrust.com","crl.globalsign.com","crl.identrust.com","crl.sectigo.com","crl.thawte.com","crl.usertrust.com","crl.verisign.com","crl3.digicert.com","crl4.digicert.com","crls.ssl.com","files.pythonhosted.org","github.com","host.docker.internal","json-schema.org","json.schemastore.org","keyserver.ubuntu.com","ocsp.digicert.com","ocsp.geotrust.com","ocsp.globalsign.com","ocsp.identrust.com","ocsp.sectigo.com","ocsp.ssl.com","ocsp.thawte.com","ocsp.usertrust.com","ocsp.verisign.com","packagecloud.io","packages.cloud.google.com","packages.microsoft.com","pip.pypa.io","ppa.launchpad.net","pypi.org","pypi.python.org","raw.githubusercontent.com","registry.npmjs.org","repo.anaconda.com","repo.continuum.io","s.symcb.com","s.symcd.com","security.ubuntu.com","shop.tiktok.com","telemetry.enterprise.githubcopilot.com","ts-crl.ws.symantec.com","ts-ocsp.ws.symantec.com","wwd.com","www.amazon.com","www.beautyindependent.com","www.glossy.co","www.googleapis.com","www.modernretail.co","www.sephora.com","www.target.com","www.tiktok.com","www.ulta.com"]},"apiProxy":{"enabled":true,"enableTokenSteering":true,"maxRuns":500,"maxEffectiveTokens":25000000,"models":{"agent":["sonnet-6x","gpt-5.4","gpt-5.3","gemini-pro","any"],"antigravity":["copilot/antigravity*","google/antigravity*","gemini/antigravity*"],"any":["copilot/*","anthropic/*","openai/*","google/*","gemini/*"],"claude":["agent"],"codex":["agent"],"coding":["copilot/gpt-5*codex*","openai/gpt-5*codex*","gpt-5-codex"],"computer-use":["copilot/*computer-use*","google/*computer-use*","gemini/*computer-use*","openai/*computer-use*"],"copilot":["agent"],"deep-research":["copilot/deep-research*","copilot/o3-deep-research*","copilot/o4-mini-deep-research*","google/deep-research*","gemini/deep-research*","openai/o3-deep-research*","openai/o4-mini-deep-research*"],"gemini":["agent"],"gemini-3-flash":["copilot/gemini-3*flash*","google/gemini-3*flash*","gemini/gemini-3*flash*"],"gemini-3-pro":["copilot/gemini-3*pro*","google/gemini-3*pro*","gemini/gemini-3*pro*"],"gemini-3.1-flash":["copilot/gemini-3.1*flash*","google/gemini-3.1*flash*","gemini/gemini-3.1*flash*"],"gemini-3.1-pro":["copilot/gemini-3.1*pro*","google/gemini-3.1*pro*","gemini/gemini-3.1*pro*"],"gemini-3.5-flash":["copilot/gemini-3.5*flash*","google/gemini-3.5*flash*","gemini/gemini-3.5*flash*"],"gemini-flash":["copilot/gemini-*flash*","google/gemini-*flash*","gemini/gemini-*flash*"],"gemini-flash-lite":["copilot/gemini-*flash*lite*","google/gemini-*flash*lite*","gemini/gemini-*flash*lite*"],"gemini-pro":["copilot/gemini-*pro*","google/gemini-*pro*","gemini/gemini-*pro*"],"gemma":["copilot/gemma*","google/gemma*","gemini/gemma*"],"gpt-5":["copilot/gpt-5*","openai/gpt-5*"],"gpt-5-codex":["copilot/gpt-5*codex*","openai/gpt-5*codex*"],"gpt-5-mini":["copilot/gpt-5*mini*","openai/gpt-5*mini*"],"gpt-5-nano":["copilot/gpt-5*nano*","openai/gpt-5*nano*"],"gpt-5-pro":["copilot/gpt-5*pro*","openai/gpt-5*pro*"],"gpt-5.2":["copilot/gpt-5.2*","openai/gpt-5.2*"],"gpt-5.3":["copilot/gpt-5.3*","openai/gpt-5.3*"],"gpt-5.4":["copilot/gpt-5.4*","openai/gpt-5.4*"],"gpt-5.5":["copilot/gpt-5.5*","openai/gpt-5.5*"],"haiku":["copilot/*haiku*","anthropic/*haiku*"],"large":["sonnet","gpt-5-pro","gpt-5","gemini-pro"],"mini":["haiku","gpt-5-mini","gpt-5-nano","gemini-flash-lite"],"opus":["copilot/*opus*","anthropic/*opus*"],"opusplan":["opus?effort=high"],"reasoning":["copilot/o1*","copilot/o3*","copilot/o4*","openai/o1*","openai/o3*","openai/o4*"],"robotics":["copilot/*robotics*","google/*robotics*","gemini/*robotics*"],"small":["mini"],"sonnet":["copilot/*sonnet*","anthropic/*sonnet*"],"sonnet-6x":["copilot/*sonnet-4-5-*","anthropic/*sonnet-4-5-*","copilot/*sonnet-4-6*","anthropic/*sonnet-4-6*"],"summarization":["haiku","gpt-5-mini","gemini-flash-lite","mini"],"vision":["copilot/gemini-*image*","gemini/gemini-*image*","copilot/gemini-*flash*","gemini/gemini-*flash*"]}},"container":{"imageTag":"0.25.58"}}' > "${RUNNER_TEMP}/gh-aw/awf-config.json"
           GH_AW_MODEL_MULTIPLIERS_PATH="/tmp/gh-aw/model_multipliers.json" node "${RUNNER_TEMP}/gh-aw/actions/merge_awf_model_multipliers.cjs"
           cp "${RUNNER_TEMP}/gh-aw/awf-config.json" /tmp/gh-aw/awf-config.json
           GH_AW_DOCKER_HOST_PATH_PREFIX_ARGS=""
@@ -1282,7 +1328,7 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           GH_AW_SAFE_OUTPUTS: ${{ steps.set-runtime-paths.outputs.GH_AW_SAFE_OUTPUTS }}
-          GH_AW_ALLOWED_DOMAINS: "*.pythonhosted.org,anaconda.org,api.business.githubcopilot.com,api.enterprise.githubcopilot.com,api.github.com,api.githubcopilot.com,api.individual.githubcopilot.com,api.snapcraft.io,archive.ubuntu.com,azure.archive.ubuntu.com,binstar.org,bootstrap.pypa.io,conda.anaconda.org,conda.binstar.org,crl.geotrust.com,crl.globalsign.com,crl.identrust.com,crl.sectigo.com,crl.thawte.com,crl.usertrust.com,crl.verisign.com,crl3.digicert.com,crl4.digicert.com,crls.ssl.com,files.pythonhosted.org,github.com,host.docker.internal,json-schema.org,json.schemastore.org,keyserver.ubuntu.com,ocsp.digicert.com,ocsp.geotrust.com,ocsp.globalsign.com,ocsp.identrust.com,ocsp.sectigo.com,ocsp.ssl.com,ocsp.thawte.com,ocsp.usertrust.com,ocsp.verisign.com,packagecloud.io,packages.cloud.google.com,packages.microsoft.com,pip.pypa.io,ppa.launchpad.net,pypi.org,pypi.python.org,raw.githubusercontent.com,registry.npmjs.org,repo.anaconda.com,repo.continuum.io,s.symcb.com,s.symcd.com,security.ubuntu.com,telemetry.enterprise.githubcopilot.com,ts-crl.ws.symantec.com,ts-ocsp.ws.symantec.com,wwd.com,www.amazon.com,www.beautyindependent.com,www.glossy.co,www.googleapis.com,www.modernretail.co"
+          GH_AW_ALLOWED_DOMAINS: "*.pythonhosted.org,anaconda.org,api.business.githubcopilot.com,api.enterprise.githubcopilot.com,api.github.com,api.githubcopilot.com,api.individual.githubcopilot.com,api.snapcraft.io,archive.ubuntu.com,azure.archive.ubuntu.com,binstar.org,bootstrap.pypa.io,conda.anaconda.org,conda.binstar.org,crl.geotrust.com,crl.globalsign.com,crl.identrust.com,crl.sectigo.com,crl.thawte.com,crl.usertrust.com,crl.verisign.com,crl3.digicert.com,crl4.digicert.com,crls.ssl.com,files.pythonhosted.org,github.com,host.docker.internal,json-schema.org,json.schemastore.org,keyserver.ubuntu.com,ocsp.digicert.com,ocsp.geotrust.com,ocsp.globalsign.com,ocsp.identrust.com,ocsp.sectigo.com,ocsp.ssl.com,ocsp.thawte.com,ocsp.usertrust.com,ocsp.verisign.com,packagecloud.io,packages.cloud.google.com,packages.microsoft.com,pip.pypa.io,ppa.launchpad.net,pypi.org,pypi.python.org,raw.githubusercontent.com,registry.npmjs.org,repo.anaconda.com,repo.continuum.io,s.symcb.com,s.symcd.com,security.ubuntu.com,shop.tiktok.com,telemetry.enterprise.githubcopilot.com,ts-crl.ws.symantec.com,ts-ocsp.ws.symantec.com,wwd.com,www.amazon.com,www.beautyindependent.com,www.glossy.co,www.googleapis.com,www.modernretail.co,www.sephora.com,www.target.com,www.tiktok.com,www.ulta.com"
           GITHUB_SERVER_URL: ${{ github.server_url }}
           GITHUB_API_URL: ${{ github.api_url }}
         with:
@@ -1884,7 +1930,7 @@ jobs:
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
           GH_AW_COMMENT_ID: ${{ needs.activation.outputs.comment_id }}
-          GH_AW_ALLOWED_DOMAINS: "*.pythonhosted.org,anaconda.org,api.business.githubcopilot.com,api.enterprise.githubcopilot.com,api.github.com,api.githubcopilot.com,api.individual.githubcopilot.com,api.snapcraft.io,archive.ubuntu.com,azure.archive.ubuntu.com,binstar.org,bootstrap.pypa.io,conda.anaconda.org,conda.binstar.org,crl.geotrust.com,crl.globalsign.com,crl.identrust.com,crl.sectigo.com,crl.thawte.com,crl.usertrust.com,crl.verisign.com,crl3.digicert.com,crl4.digicert.com,crls.ssl.com,files.pythonhosted.org,github.com,host.docker.internal,json-schema.org,json.schemastore.org,keyserver.ubuntu.com,ocsp.digicert.com,ocsp.geotrust.com,ocsp.globalsign.com,ocsp.identrust.com,ocsp.sectigo.com,ocsp.ssl.com,ocsp.thawte.com,ocsp.usertrust.com,ocsp.verisign.com,packagecloud.io,packages.cloud.google.com,packages.microsoft.com,pip.pypa.io,ppa.launchpad.net,pypi.org,pypi.python.org,raw.githubusercontent.com,registry.npmjs.org,repo.anaconda.com,repo.continuum.io,s.symcb.com,s.symcd.com,security.ubuntu.com,telemetry.enterprise.githubcopilot.com,ts-crl.ws.symantec.com,ts-ocsp.ws.symantec.com,wwd.com,www.amazon.com,www.beautyindependent.com,www.glossy.co,www.googleapis.com,www.modernretail.co"
+          GH_AW_ALLOWED_DOMAINS: "*.pythonhosted.org,anaconda.org,api.business.githubcopilot.com,api.enterprise.githubcopilot.com,api.github.com,api.githubcopilot.com,api.individual.githubcopilot.com,api.snapcraft.io,archive.ubuntu.com,azure.archive.ubuntu.com,binstar.org,bootstrap.pypa.io,conda.anaconda.org,conda.binstar.org,crl.geotrust.com,crl.globalsign.com,crl.identrust.com,crl.sectigo.com,crl.thawte.com,crl.usertrust.com,crl.verisign.com,crl3.digicert.com,crl4.digicert.com,crls.ssl.com,files.pythonhosted.org,github.com,host.docker.internal,json-schema.org,json.schemastore.org,keyserver.ubuntu.com,ocsp.digicert.com,ocsp.geotrust.com,ocsp.globalsign.com,ocsp.identrust.com,ocsp.sectigo.com,ocsp.ssl.com,ocsp.thawte.com,ocsp.usertrust.com,ocsp.verisign.com,packagecloud.io,packages.cloud.google.com,packages.microsoft.com,pip.pypa.io,ppa.launchpad.net,pypi.org,pypi.python.org,raw.githubusercontent.com,registry.npmjs.org,repo.anaconda.com,repo.continuum.io,s.symcb.com,s.symcd.com,security.ubuntu.com,shop.tiktok.com,telemetry.enterprise.githubcopilot.com,ts-crl.ws.symantec.com,ts-ocsp.ws.symantec.com,wwd.com,www.amazon.com,www.beautyindependent.com,www.glossy.co,www.googleapis.com,www.modernretail.co,www.sephora.com,www.target.com,www.tiktok.com,www.ulta.com"
           GITHUB_SERVER_URL: ${{ github.server_url }}
           GITHUB_API_URL: ${{ github.api_url }}
           GH_AW_SAFE_OUTPUTS_HANDLER_CONFIG: "{\"create_pull_request\":{\"labels\":[\"automation\",\"overseas-insight\"],\"max\":1,\"max_patch_files\":100,\"max_patch_size\":1024,\"protect_top_level_dot_folders\":true,\"protected_files\":[\"package.json\",\"bun.lockb\",\"bunfig.toml\",\"deno.json\",\"deno.jsonc\",\"deno.lock\",\"global.json\",\"NuGet.Config\",\"Directory.Packages.props\",\"mix.exs\",\"mix.lock\",\"go.mod\",\"go.sum\",\"stack.yaml\",\"stack.yaml.lock\",\"pom.xml\",\"build.gradle\",\"build.gradle.kts\",\"settings.gradle\",\"settings.gradle.kts\",\"gradle.properties\",\"package-lock.json\",\"yarn.lock\",\"pnpm-lock.yaml\",\"npm-shrinkwrap.json\",\"requirements.txt\",\"Pipfile\",\"Pipfile.lock\",\"pyproject.toml\",\"setup.py\",\"setup.cfg\",\"Gemfile\",\"Gemfile.lock\",\"uv.lock\",\"CODEOWNERS\",\"DESIGN.md\",\"README.md\",\"CONTRIBUTING.md\",\"CHANGELOG.md\",\"SECURITY.md\",\"CODE_OF_CONDUCT.md\",\"AGENTS.md\",\"CLAUDE.md\",\"GEMINI.md\"],\"protected_files_policy\":\"request_review\",\"title_prefix\":\"[overseas-insight] \"},\"create_report_incomplete_issue\":{},\"missing_data\":{},\"missing_tool\":{},\"noop\":{\"max\":1,\"report-as-issue\":\"true\"},\"report_incomplete\":{}}"

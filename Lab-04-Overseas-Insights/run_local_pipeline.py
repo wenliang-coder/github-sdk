@@ -27,6 +27,7 @@ from overseas_insight_tools import (  # noqa: E402
     overseas_fetch_all_to_disk,
     overseas_insight_or_fallback,
     overseas_load_articles_from_disk,
+    overseas_products_or_fallback,
     overseas_read_source_list,
     overseas_render_report_or_fallback,
 )
@@ -37,6 +38,7 @@ SIGNALS_DIR = "Lab-04-Overseas-Insights/output/signals"
 OUTPUT_DIR = "Lab-04-Overseas-Insights/output"
 TIME_WINDOW_HOURS = 72
 TOP_K = 6
+TOP_N_PRODUCTS = 5
 MAX_ITEMS_PER_SOURCE = 5
 TIMEOUT_SECONDS = 15
 MAX_CHARS = 200000
@@ -134,11 +136,27 @@ def main() -> int:
     p3 = _write("Lab-04-Overseas-Insights/output/insights/insights.json", insights_json + "\n")
     print(f"[落盘] {p3}")
 
+    # ---------------- 阶段 3.5：热销 TOP5 产品（fallback 路径）----------------
+    _hr("阶段 3.5：北美热销 TOP5 产品（本地无 LLM/无榜单 -> fallback 空清单）")
+    products = overseas_products_or_fallback(
+        products_json="",  # 本地无 LLM/无榜单抓取，触发兜底空清单
+        top_n=TOP_N_PRODUCTS,
+    )
+    products_list = products.get("products") or []
+    print(f"[products_or_fallback] mode={products.get('mode')} 产品数: {len(products_list)}")
+    diag["products_mode"] = products.get("mode")
+    diag["products"] = len(products_list)
+
+    products_json = json.dumps(products, ensure_ascii=False, default=str)
+    p35 = _write("Lab-04-Overseas-Insights/output/products/top_products.json", products_json + "\n")
+    print(f"[落盘] {p35}")
+
     # ---------------- 阶段 4：报告（fallback 路径）----------------
     _hr("阶段 4：生成并提交 Markdown 报告（本地无 LLM -> fallback）")
     report_md = overseas_render_report_or_fallback(
         clusters_json=clusters_json,
         insights_json=insights_json,
+        products_json=products_json,
         draft_markdown="",  # 本地无 LLM，触发 fallback
     )
     print(f"[render_report_or_fallback] 报告长度: {len(report_md)} chars")

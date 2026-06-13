@@ -32,8 +32,13 @@ network:
     - "wwd.com"
     - "www.modernretail.co"
     - "www.beautyindependent.com"
-    # research-only 目标（尽力而为，常被反爬拦截）
+    # 北美热销榜 research-only 目标（尽力而为，多为 SPA/反爬，常被拦截）
     - "www.amazon.com"
+    - "www.sephora.com"
+    - "www.ulta.com"
+    - "www.target.com"
+    - "shop.tiktok.com"
+    - "www.tiktok.com"
 safe-outputs:
   create-pull-request:
     title-prefix: "[overseas-insight] "
@@ -156,13 +161,34 @@ mcp-scripts:
     run: |
       cd "$GITHUB_WORKSPACE"
       python3 -c "import os, json, sys, subprocess; payload = json.dumps({'clusters_json': os.environ.get('INPUT_CLUSTERS_JSON', ''), 'insights_json': os.environ.get('INPUT_INSIGHTS_JSON', ''), 'clusters_path': os.environ.get('INPUT_CLUSTERS_PATH', ''), 'insights_candidate_path': os.environ.get('INPUT_INSIGHTS_CANDIDATE_PATH', ''), 'out_path': os.environ.get('INPUT_OUT_PATH', '')}); sys.exit(subprocess.run([sys.executable, 'Lab-04-Overseas-Insights/mcp-scripts/overseas_insight_or_fallback.py'], input=payload, text=True).returncode)"
+  overseas-products-or-fallback:
+    description: "校验+兜底「北美热销 TOP5 产品」清单（排名/评分/评价数/趋势为销量代理，无精确件数/GMV）。用路径参数 products_candidate_path / out_path；工具会把最终 TOP5 写入 out_path，候选不可用时回退为空清单并附缺口说明（绝不编造销量）。"
+    inputs:
+      products_candidate_path:
+        type: string
+        required: false
+      out_path:
+        type: string
+        required: false
+      top_n:
+        type: number
+        default: 5
+      products_json:
+        type: string
+        required: false
+    run: |
+      cd "$GITHUB_WORKSPACE"
+      python3 -c "import os, json, sys, subprocess; payload = json.dumps({'products_json': os.environ.get('INPUT_PRODUCTS_JSON', ''), 'products_candidate_path': os.environ.get('INPUT_PRODUCTS_CANDIDATE_PATH', ''), 'out_path': os.environ.get('INPUT_OUT_PATH', ''), 'top_n': int(os.environ.get('INPUT_TOP_N') or 5)}); sys.exit(subprocess.run([sys.executable, 'Lab-04-Overseas-Insights/mcp-scripts/overseas_products_or_fallback.py'], input=payload, text=True).returncode)"
   overseas-render-report-or-fallback:
-    description: "校验+兜底报告渲染。强烈建议用文件路径参数（clusters_path / insights_path / draft_path / out_path / frontend_out_path）。工具会把最终 Markdown 同时写入 out_path 与 frontend_out_path，返回精简状态（无需再用 edit 写文件）。"
+    description: "校验+兜底报告渲染。强烈建议用文件路径参数（clusters_path / insights_path / products_path / draft_path / out_path / frontend_out_path）。工具会把最终 Markdown 同时写入 out_path 与 frontend_out_path，返回精简状态（无需再用 edit 写文件）。"
     inputs:
       clusters_path:
         type: string
         required: false
       insights_path:
+        type: string
+        required: false
+      products_path:
         type: string
         required: false
       draft_path:
@@ -185,7 +211,7 @@ mcp-scripts:
         required: false
     run: |
       cd "$GITHUB_WORKSPACE"
-      python3 -c "import os, json, sys, subprocess; payload = json.dumps({'clusters_json': os.environ.get('INPUT_CLUSTERS_JSON', ''), 'insights_json': os.environ.get('INPUT_INSIGHTS_JSON', ''), 'draft_markdown': os.environ.get('INPUT_DRAFT_MARKDOWN', ''), 'clusters_path': os.environ.get('INPUT_CLUSTERS_PATH', ''), 'insights_path': os.environ.get('INPUT_INSIGHTS_PATH', ''), 'draft_path': os.environ.get('INPUT_DRAFT_PATH', ''), 'out_path': os.environ.get('INPUT_OUT_PATH', ''), 'frontend_out_path': os.environ.get('INPUT_FRONTEND_OUT_PATH', '')}); sys.exit(subprocess.run([sys.executable, 'Lab-04-Overseas-Insights/mcp-scripts/overseas_render_report_or_fallback.py'], input=payload, text=True).returncode)"
+      python3 -c "import os, json, sys, subprocess; payload = json.dumps({'clusters_json': os.environ.get('INPUT_CLUSTERS_JSON', ''), 'insights_json': os.environ.get('INPUT_INSIGHTS_JSON', ''), 'draft_markdown': os.environ.get('INPUT_DRAFT_MARKDOWN', ''), 'clusters_path': os.environ.get('INPUT_CLUSTERS_PATH', ''), 'insights_path': os.environ.get('INPUT_INSIGHTS_PATH', ''), 'products_path': os.environ.get('INPUT_PRODUCTS_PATH', ''), 'draft_path': os.environ.get('INPUT_DRAFT_PATH', ''), 'out_path': os.environ.get('INPUT_OUT_PATH', ''), 'frontend_out_path': os.environ.get('INPUT_FRONTEND_OUT_PATH', '')}); sys.exit(subprocess.run([sys.executable, 'Lab-04-Overseas-Insights/mcp-scripts/overseas_render_report_or_fallback.py'], input=payload, text=True).returncode)"
   write-text-file:
     description: "Write text content to a file"
     inputs:
@@ -205,12 +231,18 @@ mcp-scripts:
 
 # Overseas Insight 工作流（出海市场洞察）
 
-目标：每天生成一份**跨境电商出海市场调查报告**，**当前阶段仅聚焦单一品类「美妆护肤」、单一市场「北美」**，产出
-该品类在北美市场的热点话题、热门产品/潜力爆品与可执行的选品与营销洞察。（3C、饰品及其他市场暂不纳入，待本工作流稳定后再扩展。）
+目标：每天生成一份**跨境电商出海市场调查报告**，**当前阶段仅聚焦单一品类「美妆护肤」、单一市场「北美」**，产出两部分：
+（A）该品类在北美市场的**热点话题**与可执行的选品与营销洞察；
+（B）**北美热销 TOP5 产品**——基于主流电商榜单的「销量代理」指标（排名 / 评分 / 评价数 / 趋势）与可引用链接。
+（3C、饰品及其他市场暂不纳入，待本工作流稳定后再扩展。）
 
-数据策略：**RSS 基线为主 + 有限深度研究增强**。RSS 种子源提供可靠且低成本的基线信号；在此基础上，在网络白名单内进行
-**严格受限**的联网研究，补充少量高价值「美妆北美热产品/爆品」证据。⚠️ 运行环境对累计「毛 token」有 **25M 硬上限**（不可调），
-若深度研究不受限会在进入聚类前耗尽预算、导致整轮失败 —— 因此必须严格遵守下方 token 预算约束，并保持范围聚焦（仅美妆·北美）。
+数据策略：**RSS 基线为主 + 有限深度研究增强 + 北美电商榜单研究**。RSS 种子源提供可靠且低成本的基线信号；在网络白名单内进行
+**严格受限**的联网研究，补充少量高价值「美妆北美热产品/爆品」证据，并抓取 5 大电商（Amazon / Sephora / Ulta / Target / TikTok Shop）
+的畅销榜以提炼 TOP5 产品。⚠️ **关于销量数据的诚实口径**：免费抓取**拿不到精确销量（件数/GMV）**——这类数据只有付费工具（Jungle Scout /
+Helium 10 / Similarweb 等）才有；且这些电商站点多为 SPA/强反爬，常只返回部分文本。因此 TOP5 一律以**公开榜单排名 + 评分 + 评价数 +
+排名变化/「trending」标记**作为销量代理，**严禁编造任何销量数字**；抓不到的站点直接标注缺口，并用 RSS 新闻里出现的热门品牌/产品兜底补全。
+
+数据策略仍受 **25M「有效 token」硬上限**约束（不可调），必须严格遵守下方 token 预算约束并保持范围聚焦（仅美妆·北美）。
 
 默认配置如下：
 
@@ -218,7 +250,9 @@ mcp-scripts:
 - `signals_dir`: `Lab-04-Overseas-Insights/output/signals`
 - `output_dir`: `Lab-04-Overseas-Insights/output`
 - `time_window_hours`: `72`（美妆资讯更新较慢，窗口放宽以确保有内容）
-- `top_k`: `6`（仅美妆·北美）
+- `top_k`: `6`（热点数，仅美妆·北美）
+- `top_n_products`: `5`（北美热销产品数）
+- `bestseller_targets`: source_list 中 `fetchable=research-only` 且 `research_kind=bestseller` 的 5 个站点（Amazon / Sephora / Ulta / Target / TikTok Shop）
 - `max_items_per_source`: `5`
 - `timeout_seconds`: `15`
 - `max_chars`: `200000`
@@ -227,20 +261,20 @@ mcp-scripts:
 
 - 全程只使用仓库根目录相对路径，不要写绝对路径。
 - 所有面向模型的提示词必须使用中文。报告正文以中文为主。
-- 关键中间产物必须落盘：`raw_signals.json`、`clusters/hotspots.json`、`insights/insights.json`、`report.md`。
+- 关键中间产物必须落盘：`raw_signals.json`、`clusters/hotspots.json`、`insights/insights.json`、`products/top_products.json`、`report.md`。
 - 最终除写入 `Lab-04-Overseas-Insights/output/report.md` 外，还要把同一份 Markdown 写入
   `Lab-04-Overseas-Insights/frontend/report.md`，并通过 safe-outputs 的提交机制提交该前端文件。
 - **联网研究只能访问 frontmatter `network.allowed` 白名单内的域名**；遇到被拦截/不可达的目标（如 Amazon、TikTok、Google Trends
   常被反爬），不要反复重试，应记录该缺口并以 RSS 基线兜底继续。
 - **token 预算（硬约束）**：运行环境对累计 token 有 **25M「有效 token」上限**（=实际 token × 模型倍率，约 10×，不可调），超出即整轮失败、无报告产出。
   关键事实：上限不是被数据量撑爆的，而是被**回合数 × 每回合重发的上下文**撑爆的——回合越多、上下文越大，重发成本越高。**控制回合数是第一要务。** 为此：
-  (a) 阶段 1.5 的联网研究 **最多抓取 4 个页面、单轮完成**；
-  (b) 每次抓取必须先用 shell 把页面**提取为纯文本并截断到约 1500 字符**再阅读，**严禁把整页 HTML/原始响应读入模型上下文**；
-  (c) 不要多轮反复抓取同类页面，不要对失败目标重试；
-  (d) 尽快进入阶段 2-4（聚类/洞察/报告），各阶段 LLM 调用务必简洁，避免重复粘贴大段原文。
+  (a) 阶段 1.5 的新闻深度研究 **最多抓取 4 个页面**；阶段 1.6 的电商榜单研究 **最多抓取 5 个页面（每站 1 个）**；均单轮完成；
+  (b) 每次抓取必须先用 shell 把页面**提取为纯文本并截断**（新闻约 1500 字符；电商榜单页因产品密集可放宽到约 2500 字符）再阅读，**严禁把整页 HTML/原始响应读入模型上下文**；
+  (c) 不要多轮反复抓取同类页面，不要对失败/被拦截的目标重试（Amazon/TikTok Shop 大概率被拦，直接跳过并记缺口）；
+  (d) 尽快进入阶段 2-4（聚类/洞察/产品/报告），各阶段 LLM 调用务必简洁，避免重复粘贴大段原文。
 - **🚨 MCP 工具调用必须用「文件路径」而非「内联 JSON 内容」（这是上一轮失败的根因）**：
   - 网关对**单个字符串参数有 10KB 硬上限**。把 `raw_signals.json`（约 23KB）、`insights.json`（约 13KB）等整段 JSON 作为字符串参数传入会被拒绝，并触发反复裁剪/转义/重试，**额外消耗大量回合与上下文，直接撑爆 25M**。
-  - 因此调用 `overseas.cluster_or_fallback` / `overseas.insight_or_fallback` / `overseas.render_report_or_fallback` 时，**一律传文件路径参数**（`raw_signals_path` / `clusters_candidate_path` / `clusters_path` / `insights_candidate_path` / `insights_path` / `draft_path` / `out_path` / `frontend_out_path`），**绝不传 `*_json` / `draft_markdown` 等内联内容参数**。
+  - 因此调用 `overseas.cluster_or_fallback` / `overseas.insight_or_fallback` / `overseas.products_or_fallback` / `overseas.render_report_or_fallback` 时，**一律传文件路径参数**（`raw_signals_path` / `clusters_candidate_path` / `clusters_path` / `insights_candidate_path` / `insights_path` / `products_candidate_path` / `products_path` / `draft_path` / `out_path` / `frontend_out_path`），**绝不传 `*_json` / `draft_markdown` 等内联内容参数**。
   - 工具会自行从路径读取输入、把最终结果**直接写入 `out_path`**（报告还会同时写 `frontend_out_path`），并只返回精简状态（mode/计数/路径）。**因此无需再用 `edit` 重复写这些产物文件。**
 - **🚨 候选 JSON 必须用 Python `json.dump` 写文件，不要手写 heredoc**：各阶段的 LLM 候选结果（聚类/洞察）请在 shell 里构造成 Python dict 后用
   `json.dump(obj, open(path,'w'), ensure_ascii=False)` 落盘，**严禁用 heredoc 手敲 JSON**（中文引号「」与未转义的 `"` 会反复打断解析、白白浪费回合）。
@@ -250,9 +284,9 @@ mcp-scripts:
 ## 阶段 0：深度研究规划
 
 1. 调用 `overseas.read_source_list(source_list_path)` 读取种子源（均为 `category=beauty` / `markets=[na]`）。
-2. 规划 **至多 4 个**最高价值的定向抓取目标，**仅围绕「美妆护肤 × 北美」的热点/爆品**，例如「美妆护肤 北美 爆品」
-   「skincare bestseller US」「TikTok/Amazon 美妆 热销 美国」。只选信息密度最高的少量目标。
-3. 标记 `fetchable: research-only` 的源（Amazon 美妆榜单）为「尽力而为」目标，不可达时直接跳过，不重试。
+2. 规划新闻深度研究：**至多 4 个**最高价值的定向抓取目标，**仅围绕「美妆护肤 × 北美」的热点/爆品**，例如「skincare bestseller US」。只选信息密度最高的少量目标。
+3. 规划电商榜单研究：选出 5 个 `fetchable=research-only` 的电商畅销榜目标（Amazon / Sephora / Ulta / Target / TikTok Shop）。
+   这些站点多为 SPA/强反爬，**作为「尽力而为」目标**，不可达/被拦时直接跳过、不重试，并记录缺口。
 
 ## 阶段 1：基线抓取并装载原始信号
 
@@ -271,7 +305,28 @@ mcp-scripts:
 3. 把提炼出的少量高价值信号（research-enhanced）用 Python 读出 `Lab-04-Overseas-Insights/output/raw_signals.json`、
    追加到其 `items` 列表后再 `json.dump(..., ensure_ascii=False)` 写回**同一文件**，使其与 RSS 基线信号一并进入聚类（后续聚类工具按路径读取该文件）。
 4. 任一目标不可达或为 research-only 时，**直接跳过、不重试**，并在报告「数据来源」注明缺口，以 RSS 基线继续。
-5. 完成本阶段后**立即进入阶段 2**，不要继续扩大抓取范围或反复抓取。
+5. 完成本阶段后**进入阶段 1.6**，不要继续扩大抓取范围或反复抓取。
+
+## 阶段 1.6：北美电商畅销榜研究（热销 TOP5 产品）
+
+> ⚠️ 诚实口径：免费抓取**拿不到精确销量（件数/GMV）**；这些电商站点多为 SPA/强反爬，常只返回部分文本。本阶段以**公开榜单排名 + 评分 +
+> 评价数 + 排名变化/「trending」标记**作为销量代理，**严禁编造销量数字**。
+
+1. **单轮、至多 5 次抓取**（Amazon / Sephora / Ulta / Target / TikTok Shop 各 1 个畅销榜页面）。对每个目标先用 shell 提取纯文本并截断到约 2500 字符再阅读，例如：
+   `curl -sL --max-time 15 -A "Mozilla/5.0" "<bestseller_url>" | python3 -c "import sys,re; t=re.sub(r'<[^>]+>',' ',sys.stdin.read()); print(re.sub(r'\s+',' ',t)[:2500])" 2>/dev/null || echo "BLOCKED/ERROR"`
+   **只把这 ≤2500 字符摘要纳入推理**，严禁读入整页 HTML。被拦/为空（Amazon、TikTok Shop 大概率如此）则**直接跳过、不重试**并记缺口。
+2. 从能抓到的榜单文本中提炼产品要点；抓不到的，用阶段 1/1.5 的 RSS 新闻里反复出现的热门品牌/产品兜底，**综合得出北美美妆热销 TOP5**。每个产品给出：
+   `rank`（榜单排名/综合序号）、`name`、`brand`、`subcategory`（护肤/彩妆/香水/个护）、`price`（价格带）、`rating`（评分，无则留空）、
+   `review_count`（评价数，无则留空）、`trend`（上升/稳定/下滑/新晋/长期在榜）、`platform`（Amazon/Sephora/Ulta/Target/TikTok Shop）、
+   `url`（可引用链接）、`evidence`（数据来源：榜单页 vs 新闻信号）、`selling_points`（核心卖点）、`why_hot`（为什么火）。
+3. 把 TOP5 候选**用 Python `json.dump(obj, open('/tmp/gh-aw/agent/products_candidate.json','w'), ensure_ascii=False)` 落盘**（严禁 heredoc 手写 JSON）。目标结构：
+   `{"products": [{"rank":1, "name":"...", "brand":"...", "subcategory":"...", "price":"...", "rating":4.8, "review_count":82000, "trend":"...", "platform":"...", "url":"...", "evidence":"...", "selling_points":[], "why_hot":"..."}]}`
+4. 调用 `overseas.products_or_fallback`，**只传文件路径参数**：
+   - `products_candidate_path="/tmp/gh-aw/agent/products_candidate.json"`
+   - `top_n=5`
+   - `out_path="Lab-04-Overseas-Insights/output/products/top_products.json"`
+   工具会校验/兜底后把最终 TOP5 写入 `out_path` 并返回精简状态。**不要再用 `edit` 写该文件。**
+5. 简要汇报抓到/被拦的站点与 TOP5 概览，并注明哪些指标来自榜单、哪些来自新闻兜底。完成后进入阶段 2。
 
 ## 阶段 2：聚类热点（美妆护肤 · 北美）
 
@@ -338,28 +393,30 @@ mcp-scripts:
 
 ```text
 你是 Overseas Market Report Writer。
-请基于聚类与洞察生成一份中文 Markdown 报告，主题固定为「美妆护肤 · 北美市场 出海洞察日报」，结构包含：
+请基于聚类、洞察与北美热销 TOP5 产品生成一份中文 Markdown 报告，主题固定为「美妆护肤 · 北美市场 出海洞察日报」，结构包含：
 - 今日摘要（3-5 条 TL;DR）
 - 热点话题（美妆护肤 · 北美）
-- 热门产品 / 潜力爆品（表格：产品/主题 | 子类 | 价格带 | 核心卖点 | 来源）
+- 北美热销 TOP5 产品（表格：排名 | 产品 | 品牌 | 子类 | 价格带 | 评分 | 评价数 | 趋势 | 平台；并逐条给「为什么火/核心卖点」+可引用链接）
+  ⚠️ 明确写出口径说明：排名/评分/评价数/趋势为**销量代理指标**，非精确销量；注明哪些来自电商榜单、哪些来自新闻兜底、哪些站点被拦缺数据。
 - 选品与营销行动建议（选品方向 / 内容营销角度 / 投放建议，针对北美美妆）
 - 风险与合规提示（美妆重点：FDA / MoCRA 注册与备案、成分与标签合规、平台类目政策、知识产权）
-- 数据来源（引用链接，并标注 RSS基线 vs 深度研究；注明被拦截/不可达的缺口）
+- 数据来源（引用链接，并标注 RSS基线 vs 深度研究 vs 电商榜单；注明被拦截/不可达的缺口）
 
 ## 输入
-已落盘的 clusters/hotspots.json 与 insights/insights.json。
+已落盘的 clusters/hotspots.json、insights/insights.json 与 products/top_products.json。
 
 输出 Markdown，不要代码块。
 ```
 
-2. 把生成的 Markdown 草稿**写入文件** `/tmp/gh-aw/agent/report_draft.md`（用 `edit` 或 shell 写入均可，只写这一份草稿）。
+2. 把生成的 Markdown 草稿**写入文件** `/tmp/gh-aw/agent/report_draft.md`（用 `edit` 或 shell 写入均可，只写这一份草稿）。草稿务必已包含「北美热销 TOP5 产品」整段。
 3. 调用 `overseas.render_report_or_fallback`，**只传文件路径参数**，让工具一次性完成校验/兜底并落盘两个目标文件：
    - `clusters_path="Lab-04-Overseas-Insights/output/clusters/hotspots.json"`
    - `insights_path="Lab-04-Overseas-Insights/output/insights/insights.json"`
+   - `products_path="Lab-04-Overseas-Insights/output/products/top_products.json"`
    - `draft_path="/tmp/gh-aw/agent/report_draft.md"`
    - `out_path="Lab-04-Overseas-Insights/output/report.md"`
    - `frontend_out_path="Lab-04-Overseas-Insights/frontend/report.md"`
-   工具会把最终 Markdown **同时写入** `out_path` 与 `frontend_out_path`，并返回精简状态（mode/字数/路径）。**不要再用 `edit` 重复写这两个文件。**
+   工具会把最终 Markdown **同时写入** `out_path` 与 `frontend_out_path`，并返回精简状态（mode/字数/路径）。**不要再用 `edit` 重复写这两个文件。**（兜底渲染会用 products_path 自动补出 TOP5 表。）
 4. 通过 safe-outputs 的 `create-pull-request` 机制提交包含 `Lab-04-Overseas-Insights/output/report.md` 和
    `Lab-04-Overseas-Insights/frontend/report.md` 的 PR。PR 标题应包含日期和报告摘要。
 5. 最终总结需说明报告输出路径、前端同步路径和 PR 编号。如使用了兜底逻辑请注明。
