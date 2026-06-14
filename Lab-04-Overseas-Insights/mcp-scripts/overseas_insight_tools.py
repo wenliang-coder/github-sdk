@@ -651,6 +651,200 @@ def overseas_fetch_bestsellers_to_disk(
     return summary
 
 
+_SOURCING_KEYWORD_RULES: list[tuple[tuple[str, ...], str]] = [
+    (("hydrocolloid", "pimple", "acne patch", "zit", "blemish", "patch"), "hydrocolloid acne pimple patch"),
+    (("glycolic",), "glycolic acid exfoliating toner"),
+    (("toner pad", "pore pad", "exfoliat", "cotton round", "cotton pad"), "facial exfoliating toner pad"),
+    (("bio-collagen", "collagen", "hydrogel"), "collagen hydrogel face mask"),
+    (("sheet mask", "face mask", "sheet"), "korean sheet face mask"),
+    (("lip mask", "lip sleeping", "lip balm"), "lip mask"),
+    (("makeup remover", "remover wipe", "towelette", "cleansing wipe", " wipes"), "makeup remover wipes"),
+    (("serum", "ampoule", "essence"), "face serum oem"),
+    (("sunscreen", "spf", "sunblock"), "sunscreen spf 50"),
+    (("mascara",), "mascara"),
+    (("cleanser", "face wash", "foaming wash", "cleansing"), "facial cleanser oem"),
+    (("body lotion", "body cream"), "shea body lotion"),
+    (("body wash", "shower gel"), "body wash shower gel"),
+    (("moisturizer", "moisturiz", "face cream"), "face moisturizer cream"),
+    (("shampoo",), "shampoo"),
+    (("hand soap", "liquid soap", "hand wash"), "liquid hand soap"),
+    (("toner",), "facial toner oem"),
+    (("mask",), "facial mask oem"),
+]
+
+
+def _sourcing_keyword(name: str) -> str:
+    """Map a US bestseller product title to a clean Alibaba.com search keyword
+    (the OEM/ODM equivalent category — 1688/Alibaba carry white-label products,
+    not the branded SKU)."""
+    n = (name or "").lower()
+    for keys, kw in _SOURCING_KEYWORD_RULES:
+        if any(k in n for k in keys):
+            return kw
+    stop = {"with", "from", "best", "skin", "care", "face", "your", "that", "this", "the", "and", "for"}
+    words = [w for w in re.findall(r"[a-z]+", n) if len(w) > 3 and w not in stop]
+    return (" ".join(words[:3]) or "beauty product") + " oem"
+
+
+def _extract_sourcing_offers(html: str, *, max_chars: int = 2600) -> dict[str, Any]:
+    """Extract supplier candidates / price ranges / MOQs / an offer text window
+    from an Alibaba.com search result page."""
+    text = _clean_visible_text(html)
+    captcha = ("unusual traffic" in text.lower()) or ("slide to verify" in text.lower()) or (
+        "captcha" in text.lower() and len(text) < 400
+    )
+    suppliers = re.findall(
+        r"([A-Z][A-Za-z0-9&\.\,\-\(\) ]{3,58}(?:Co\.,? ?Ltd|Trading|Technology|Cosmetics|Biotech(?:nology)?|Manufacturer|Industrial|Limited|Import|Export))",
+        text,
+    )
+    sup_seen: set[str] = set()
+    sup_clean: list[str] = []
+    _junk = ("chat now", "select ", "view ", "contact", "browser does not")
+    for s in suppliers:
+        s = s.strip()
+        if "browser does not support" in s.lower():
+            s = s.split("tag", 1)[-1].strip()
+        s = re.sub(r"^[^A-Za-z]+", "", s).strip()  # drop leading dots/spaces
+        low = s.lower()
+        if len(s) < 8 or any(j in low for j in _junk):
+            continue
+        # require a real company-like token, not a bare suffix
+        if low in {"trading co., ltd", "co., ltd", "import and export co., ltd"}:
+            continue
+        if s in sup_seen:
+            continue
+        sup_seen.add(s)
+        sup_clean.append(s)
+        if len(sup_clean) >= 12:
+            break
+    prices = re.findall(r"\$\s?\d[\d,]*\.?\d*\s*-\s*\d[\d,]*\.?\d*|\$\s?\d+\.\d{2}", text)[:20]
+    moqs = re.findall(r"(\d[\d,]*)\s*(?:Pieces|pieces|Sets|Units|Bags|Boxes)\b", text)[:20]
+    anchor = text.find("$")
+    window = text[max(0, anchor - 120) : max(0, anchor - 120) + max_chars] if anchor != -1 else text[:max_chars]
+    return {
+        "captcha": captcha,
+        "suppliers": sup_clean,
+        "prices": prices,
+        "moqs": moqs,
+        "text_window": window,
+    }
+
+
+def overseas_fetch_sourcing_to_disk(
+    *,
+    api_key: str,
+    products: list[dict[str, Any]],
+    out_dir: str = "./output/signals/sourcing",
+    country: str = "us",
+    timeout_seconds: int = 70,
+    max_chars: int = 2600,
+    captcha_retries: int = 3,
+    max_products: int = 6,
+) -> dict[str, Any]:
+    """For each top product, search Alibaba.com (export B2B; 1688's sibling — 1688
+    itself is captcha-walled on the free proxy plan) and write a compact supplier
+    extract to disk. Retries a few times to ride past Alibaba's intermittent
+    captcha via proxy rotation. Key stays in the pre-step; never fabricates data."""
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    api_key = (api_key or "").strip()
+
+    summary: dict[str, Any] = {
+        "provider": "scraperapi",
+        "platform": "alibaba.com",
+        "fetched_at": _to_iso(_utc_now()),
+        "out_dir": str(out),
+        "have_key": bool(api_key),
+        "results": [],
+    }
+    if not api_key:
+        summary["note"] = "未配置 SCRAPER_API_KEY，跳过 1688/Alibaba 供应商抓取。"
+        (out / "_summary.json").write_text(
+            json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
+        return summary
+
+    seen_kw: set[str] = set()
+    with httpx.Client(timeout=timeout_seconds, follow_redirects=True) as client:
+        for p in products[:max_products]:
+            name = str(p.get("name") or "").strip()
+            if not name:
+                continue
+            kw = _sourcing_keyword(name)
+            if kw in seen_kw:
+                continue
+            seen_kw.add(kw)
+            slug = _safe_key(name)[:48]
+            from urllib.parse import quote
+
+            search_url = f"https://www.alibaba.com/trade/search?SearchText={quote(kw)}"
+            entry: dict[str, Any] = {
+                "product": name,
+                "keyword": kw,
+                "alibaba_search_url": search_url,
+                "1688_search_url": f"https://s.1688.com/selloffer/offer_search.htm?keywords={quote(kw)}",
+                "ok": False,
+                "suppliers": 0,
+                "prices": 0,
+                "note": None,
+                "file": None,
+            }
+            print(f"[sourcing] {name[:40]} -> '{kw}' ...", end=" ", flush=True)
+            ext: dict[str, Any] = {}
+            status = None
+            try:
+                for attempt in range(max(1, captcha_retries)):
+                    r = client.get(
+                        "https://api.scraperapi.com/",
+                        params={"api_key": api_key, "url": search_url, "render": "true", "country_code": country},
+                    )
+                    status = int(r.status_code)
+                    ext = _extract_sourcing_offers(r.text, max_chars=max_chars)
+                    if not ext.get("captcha") and (ext.get("suppliers") or ext.get("prices")):
+                        break
+                if ext.get("captcha"):
+                    entry["note"] = "Alibaba captcha 拦截（已重试，代理轮换未通过）"
+                    print("CAPTCHA", flush=True)
+                elif ext.get("suppliers") or ext.get("prices"):
+                    entry["ok"] = True
+                    entry["suppliers"] = len(ext["suppliers"])
+                    entry["prices"] = len(ext["prices"])
+                    fpath = out / f"{slug}.txt"
+                    lines = [
+                        f"PRODUCT: {name}",
+                        f"KEYWORD: {kw}",
+                        f"ALIBABA_SEARCH: {search_url}",
+                        f"1688_SEARCH: {entry['1688_search_url']}",
+                        f"STATUS: {status}",
+                        "SUPPLIERS:",
+                        *[f"  - {s}" for s in ext["suppliers"]],
+                        f"PRICE_RANGES_USD: {', '.join(ext['prices'])}",
+                        f"MOQS: {', '.join(ext['moqs'])}",
+                        "OFFERS_TEXT:",
+                        ext["text_window"],
+                    ]
+                    fpath.write_text("\n".join(lines) + "\n", encoding="utf-8")
+                    entry["file"] = str(fpath)
+                    print(f"OK (sup={entry['suppliers']}, prices={entry['prices']})", flush=True)
+                else:
+                    entry["note"] = f"no offers (status {status})"
+                    print(f"EMPTY ({status})", flush=True)
+            except Exception as exc:  # noqa: BLE001
+                entry["note"] = f"error: {str(exc)[:120]}"
+                print(f"ERROR ({str(exc)[:50]})", flush=True)
+            summary["results"].append(entry)
+            time.sleep(0.2)
+
+    ok_n = sum(1 for e in summary["results"] if e.get("ok"))
+    summary["ok_count"] = ok_n
+    summary["product_count"] = len(summary["results"])
+    (out / "_summary.json").write_text(
+        json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    print(f"[sourcing] done: {ok_n}/{len(summary['results'])} products sourced.", flush=True)
+    return summary
+
+
 def _parse_rss_items(raw: str, *, max_items: int) -> list[dict[str, Any]]:
     try:
         import feedparser  # type: ignore
@@ -1474,6 +1668,16 @@ def overseas_products_or_fallback(
                             if isinstance(x, str) and x.strip()
                         ],
                         "why_hot": str(p.get("why_hot") or "").strip(),
+                        # —— 1688/Alibaba 供应链字段 ——
+                        "supplier_name": str(p.get("supplier_name") or "").strip(),
+                        "supplier_product": str(p.get("supplier_product") or "").strip(),
+                        "wholesale_price": str(p.get("wholesale_price") or "").strip(),
+                        "moq": str(p.get("moq") or "").strip(),
+                        "sourcing_platform": str(p.get("sourcing_platform") or "").strip(),
+                        "sourcing_url": str(p.get("sourcing_url") or "").strip(),
+                        "alt_1688_url": str(p.get("alt_1688_url") or p.get("url_1688") or "").strip(),
+                        "margin_estimate": str(p.get("margin_estimate") or "").strip(),
+                        "compliance_status": str(p.get("compliance_status") or p.get("compliance") or "").strip(),
                     }
                 )
                 if len(sanitized) >= top_n:
@@ -1528,7 +1732,11 @@ def _render_products_section(products: list[dict[str, Any]]) -> list[str]:
             )
         )
     lines.append("")
-    # 卖点与来源链接
+    # 卖点与来源链接 + 1688/Alibaba 供应链落地
+    has_sourcing = any(
+        (p.get("supplier_name") or p.get("wholesale_price") or p.get("sourcing_url"))
+        for p in products
+    )
     for p in sorted(products, key=lambda x: int(_coerce_number(x.get("rank")) or 999)):
         name = str(p.get("name") or "").strip()
         if not name:
@@ -1546,6 +1754,39 @@ def _render_products_section(products: list[dict[str, Any]]) -> list[str]:
         if url:
             line += f" {url}"
         lines.append(line)
+        # 供应链子项（若有）
+        sup = str(p.get("supplier_name") or "").strip()
+        wp = str(p.get("wholesale_price") or "").strip()
+        moq = str(p.get("moq") or "").strip()
+        margin = str(p.get("margin_estimate") or "").strip()
+        comp = str(p.get("compliance_status") or "").strip()
+        s_url = str(p.get("sourcing_url") or "").strip()
+        u1688 = str(p.get("alt_1688_url") or "").strip()
+        plat = str(p.get("sourcing_platform") or "").strip()
+        sub_bits = []
+        if sup:
+            sub_bits.append(f"供应商：{sup}" + (f"（{plat}）" if plat else ""))
+        if wp:
+            sub_bits.append(f"拿货价：{wp}" + (f"，MOQ {moq}" if moq else ""))
+        if margin:
+            sub_bits.append(f"预估毛利：{margin}")
+        if comp:
+            sub_bits.append(f"合规：{comp}")
+        links = []
+        if s_url:
+            links.append(f"[Alibaba]({s_url})")
+        if u1688:
+            links.append(f"[1688]({u1688})")
+        if sub_bits or links:
+            lines.append(
+                "  - 🏭 供应链：" + "；".join(sub_bits) + (("　" + " ".join(links)) if links else "")
+            )
+    if has_sourcing:
+        lines.append("")
+        lines.append(
+            "> 供应链口径：拿货价/供应商来自 **Alibaba.com**（出口型 B2B，1688 同集团；1688.com 受验证码限制按需手动核价，已附 1688 搜索链接）。"
+            "毛利为**粗估**（= (美国零售价 − 拿货价) / 零售价），**未计**头程物流、关税、平台佣金/FBA、广告与退货。合规为入市要求提示，非供应商背书。"
+        )
     lines.append("")
     return lines
 
