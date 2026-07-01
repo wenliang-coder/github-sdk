@@ -111,9 +111,11 @@ def _derive_tracks(source: dict[str, Any]) -> list[str]:
             if isinstance(k, str) and k.strip():
                 keys.append(k.strip().lower())
 
-    # Coarse buckets from keywords (EV themes).
+    # Coarse buckets from keywords (EV themes, beauty, 3c, jewelry, market).
     joined = " ".join(keys)
     tracks: list[str] = []
+    
+    # Category matching
     if any(
         x in joined
         for x in [
@@ -150,6 +152,61 @@ def _derive_tracks(source: dict[str, Any]) -> list[str]:
         x in joined for x in ["launch", "新车", "model", "车型", "release", "发布"]
     ):
         tracks.append("new_model")
+    if any(
+        x in joined
+        for x in [
+            "beauty",
+            "skincare",
+            "化妆",
+            "护肤",
+            "makeup",
+            "美妆",
+            "cosmetics",
+        ]
+    ):
+        tracks.append("beauty")
+    if any(
+        x in joined
+        for x in [
+            "3c",
+            "electronics",
+            "gadget",
+            "device",
+            "电子产品",
+            "数码",
+            "手机",
+            "smartphone",
+        ]
+    ):
+        tracks.append("3c")
+    if any(
+        x in joined
+        for x in [
+            "jewelry",
+            "jewel",
+            "珠宝",
+            "首饰",
+            "钻石",
+            "diamond",
+            "ring",
+            "戒指",
+        ]
+    ):
+        tracks.append("jewelry")
+    if any(
+        x in joined
+        for x in [
+            "market",
+            "markets",
+            "market:",
+            "市场",
+            "商业",
+            "business",
+            "commerce",
+        ]
+    ):
+        tracks.append("market:general")
+    
     if not tracks:
         # fallback by domain / platform
         platform = str(source.get("platform") or "").lower()
@@ -1158,3 +1215,89 @@ def register_tools(registry: object) -> None:
     register("tech.cluster_or_fallback", tech_cluster_or_fallback)
     register("tech.insight_or_fallback", tech_insight_or_fallback)
     register("tech.render_report_or_fallback", tech_render_report_or_fallback)
+
+
+# ===== 测试用例 =====
+# 运行: pytest tests/test_derive_tracks.py -v
+
+if __name__ == "__main__":
+    # 快速测试示例
+    import pytest
+    pytest.main([__file__, "-v"])
+
+
+def test_derive_tracks_beauty():
+    """测试 beauty 品类派生"""
+    source = {"include_keywords": ["skincare", "护肤", "makeup"]}
+    result = _derive_tracks(source)
+    assert "beauty" in result
+
+
+def test_derive_tracks_3c():
+    """测试 3c 电子产品品类派生"""
+    source = {"include_keywords": ["gadget", "device", "手机"]}
+    result = _derive_tracks(source)
+    assert "3c" in result
+
+
+def test_derive_tracks_jewelry():
+    """测试 jewelry 珠宝品类派生"""
+    source = {"include_keywords": ["diamond", "钻石", "ring"]}
+    result = _derive_tracks(source)
+    assert "jewelry" in result
+
+
+def test_derive_tracks_market_general():
+    """测试 market:general 市场标签派生"""
+    source = {"include_keywords": ["market", "商业", "business"]}
+    result = _derive_tracks(source)
+    assert "market:general" in result
+
+
+def test_derive_tracks_multiple_categories():
+    """测试多个品类同时匹配"""
+    source = {"include_keywords": ["beauty", "skincare", "jewelry", "diamond"]}
+    result = _derive_tracks(source)
+    assert "beauty" in result
+    assert "jewelry" in result
+
+
+def test_derive_tracks_empty_keywords():
+    """测试空关键词列表的兜底分支"""
+    source = {"include_keywords": [], "url": "https://example.com", "platform": "generic"}
+    result = _derive_tracks(source)
+    assert "auto_news" in result
+
+
+def test_derive_tracks_no_keywords():
+    """测试无关键词字段的兜底分支"""
+    source = {"url": "https://electrek.co/article", "platform": "electrek"}
+    result = _derive_tracks(source)
+    assert "global_ev" in result
+
+
+def test_derive_tracks_china_ev_fallback():
+    """测试中国 EV 新闻源的兜底分支"""
+    source = {"include_keywords": [], "url": "https://cnevpost.com/news", "platform": ""}
+    result = _derive_tracks(source)
+    assert "china_ev" in result
+
+
+def test_derive_tracks_global_ev_fallback():
+    """测试全球 EV 新闻源的兜底分支"""
+    source = {"include_keywords": [], "url": "https://insideevs.com/news", "platform": ""}
+    result = _derive_tracks(source)
+    assert "global_ev" in result
+
+
+def test_derive_tracks_mixed_keywords_and_fallback():
+    """测试匹配的关键词优先于兜底分支"""
+    source = {
+        "include_keywords": ["battery", "charging"],
+        "url": "https://cnevpost.com",
+        "platform": "news"
+    }
+    result = _derive_tracks(source)
+    assert "tech_battery" in result
+    # 关键词匹配后不应该使用兜底分支
+    assert "china_ev" not in result

@@ -144,6 +144,14 @@ copilot -p "解释 git push -f 的作用和风险"
 
 **预期结果**：Copilot 会列出抓取→聚类→洞察→渲染 4 个阶段，并点名 `tech_fetch_all_to_disk` / `tech_cluster_or_fallback` 等函数。
 
+**补充：在 Chat 里引入特定文件的两种方式**
+
+- **方式 1：拖拽文件** —— 直接把文件从 VS Code 资源管理器拖入 Chat 输入框，文件内容会作为上下文附加到本次提问。
+- **方式 2：`#file` 快捷方式** —— 在输入框输入 `#file:`，弹出补全后搜索文件名，例如：
+  ```text
+  #file:Lab-01-Tech-Insights/input/api/rss_list.json 这个文件里有哪些 RSS 源？
+  ```
+
 > 顺手练 `/explain`：选中 `mcp-scripts/tech_insight_tools.py` 里 `tech_cluster_or_fallback` 的兜底聚类那段，按 Inline Chat（Win `Ctrl+I` / mac `Cmd+I`）输入 `/explain`，让它逐行讲解阈值与打分。
 
 3. 查看数据源：`Lab-01-Tech-Insights/input/api/rss_list.json`
@@ -200,7 +208,7 @@ python3 -m venv .venv
 2. 把下面这句粘贴进去、回车（`#file:` 会把该文件内容带进上下文）：
 
 ```text
-#file:Lab-01-Tech-Insights/requirements.txt 依赖都装了，但 run_local_pipeline.py 抓到的文章解析不出来、报告为空，可能是什么原因？怎么排查？
+#file:.github/workflows/tech-insight.md 这个工作流文件定义了哪些阶段？每个阶段分别做什么？工具调用顺序是怎样的？
 ```
 
 **预期结果**：Copilot 会结合 `requirements.txt` 的实际内容定位（如 `feedparser` 缺失/版本、编码问题），而不是泛泛而谈。
@@ -298,11 +306,11 @@ git push origin main
 ### 步骤 5: 手动触发工作流
 - **方法 A（推荐）**：在 GitHub UI 页面。
   - 打开仓库 → **Actions** 标签页。
-  - 左侧选择 **EV Insight Workflow**。
+  - 左侧选择 **Tech Insight Workflow**。
   - 点击 **Run workflow** → **Run workflow**。
 - **方法 B（CLI）**：
 ```bash
-gh workflow run "EV Insight Workflow"
+gh workflow run "Tech Insight Workflow"
 ```
 
 ### 步骤 6: 观察运行
